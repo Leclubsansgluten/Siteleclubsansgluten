@@ -1,0 +1,163 @@
+name: SEO AutoPost — Le Club Sans Gluten
+on:
+  schedule:
+    - cron: '0 6 * * *'
+    - cron: '0 10 * * *'
+    - cron: '0 14 * * *'
+    - cron: '0 18 * * *'
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Choisir la categorie et le sujet SEO
+        run: |
+          CATS=("recettes" "sante" "farines" "guides")
+          TOTAL=$(find . -type f -name "*.html" -not -name "index.html" -not -name "template.html" -not -name "a-propos.html" -not -name "glossaire.html" -not -name "calculateur.html" | wc -l)
+          INDEX=$(( TOTAL % 4 ))
+          CAT=${CATS[$INDEX]}
+          echo "CATEGORIE=$CAT" >> $GITHUB_ENV
+          echo "Categorie choisie : $CAT (total articles : $TOTAL)"
+
+      - name: Generation article SEO
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          CAT=$CATEGORIE
+          PROMPT="Tu es un expert SEO et redacteur specialise dans l alimentation sans gluten. Tu dois generer un article optimise SEO pour le site leclubsansgluten.com. CATEGORIE : $CAT. Choisis un sujet longue traine specifique, intention de recherche claire, cible les femmes francaises 30-55 ans intolérantes au gluten. Redige 3500 mots minimum, langage naturel chaleureux, 6 sous-titres H2, listes, chiffres concrets, FAQ 4 questions. REPONDS EXACTEMENT dans ce format : [TITRE]titre 60 car max[/TITRE] [SLUG]slug-url[/SLUG] [META]meta 155 car[/META] [TEMPS]X min[/TEMPS] [FAQ_Q1]question[/FAQ_Q1] [FAQ_A1]reponse[/FAQ_A1] [FAQ_Q2]question[/FAQ_Q2] [FAQ_A2]reponse[/FAQ_A2] [FAQ_Q3]question[/FAQ_Q3] [FAQ_A3]reponse[/FAQ_A3] [FAQ_Q4]question[/FAQ_Q4] [FAQ_A4]reponse[/FAQ_A4] [CONTENU]html complet avec p h2 h3 ul li strong uniquement[/CONTENU]"
+
+          RESPONSE=$(curl -s https://api.anthropic.com/v1/messages \
+            -H "x-api-key: $ANTHROPIC_API_KEY" \
+            -H "anthropic-version: 2023-06-01" \
+            -H "content-type: application/json" \
+            -d "{\"model\":\"claude-sonnet-4-20250514\",\"max_tokens\":8000,\"messages\":[{\"role\":\"user\",\"content\":$(echo "$PROMPT" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))')}]}")
+
+          echo "$RESPONSE" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['content'][0]['text'])" > brut.txt
+          echo "Article genere ($(wc -c < brut.txt) bytes)"
+
+      - name: Construire la page HTML
+        run: |
+          CAT=$CATEGORIE
+          python3 << 'PYEOF'
+          import re, os
+          from datetime import datetime
+
+          t = open('brut.txt').read()
+          cat = os.environ.get('CATEGORIE', 'guides')
+
+          def ext(tag, default=''):
+              m = re.search(r'\['+tag+r'\](.*?)\[/'+tag+r'\]', t, re.DOTALL)
+              return m.group(1).strip() if m else default
+
+          titre = ext('TITRE', 'Article sans gluten')
+          slug = ext('SLUG', 'article-' + str(abs(hash(t)))[:8])[:60]
+          meta = ext('META', '')
+          temps = ext('TEMPS', '8 min')
+          contenu = ext('CONTENU', '<p>Contenu en cours.</p>')
+
+          months = ['janvier','fevrier','mars','avril','mai','juin','juillet','aout','septembre','octobre','novembre','decembre']
+          d = datetime.now()
+          date = str(d.day) + ' ' + months[d.month-1] + ' ' + str(d.year)
+
+          faq = '<div class="faq-block"><h2>Questions frequentes</h2>'
+          for i in range(1,5):
+              q = ext('FAQ_Q'+str(i))
+              a = ext('FAQ_A'+str(i))
+              if q and a:
+                  faq += '<div class="faq-item"><button class="faq-q" onclick="this.parentElement.classList.toggle(\'open\')">'+q+'<span class="faq-icon">+</span></button><div class="faq-a"><p>'+a+'</p></div></div>'
+          faq += '</div>'
+
+          labels = {'recettes':'Recettes','sante':'Sante','farines':'Farines','guides':'Conseils'}
+          emojis = {'recettes':'🍞','sante':'🌿','farines':'⚖️','guides':'📖'}
+          label = labels.get(cat, cat)
+          emoji = emojis.get(cat, '')
+
+          if cat == 'sante':
+              cta = '<div class="cta-box"><h3>🎁 Telecharge ton guide de survie GRATUIT</h3><p>Telecharge par plus de 20 000 femmes intolérantes.</p><a class="cta-btn" href="https://www.whynottraining.fr/08c32d2c-1fbf916c-b0fd38be-d95c800f-ee160319-0993e605" target="_blank">Je veux mon guide gratuit →</a></div>'
+              disclaimer = '<div class="disclaimer"><strong>Avis medical :</strong> Les informations de cet article sont a titre informatif uniquement. Consultez votre medecin.</div>'
+          else:
+              cta = '<div class="cta-box"><h3>📚 La Bible des Farines Sans Gluten</h3><p>27 farines decryptees, 3 mix magiques.</p><a class="cta-btn" href="https://www.whynottraining.fr/ed790464" target="_blank">Je veux La Bible des Farines →</a></div>'
+              disclaimer = ''
+
+          import random
+          files = [f for f in os.listdir(cat) if f.endswith('.html') and f != 'index.html'] if os.path.exists(cat) else []
+          random.shuffle(files)
+          related = ''
+          if files[:3]:
+              related = '<div class="related"><h2>Tu pourrais aussi aimer</h2><div class="related-grid">'
+              for f in files[:3]:
+                  name = f.replace('.html','').replace('-',' ').title()
+                  related += '<a href="/'+cat+'/'+f+'" class="related-card"><div class="related-card-body"><div class="related-card-title">'+name+'</div></div></a>'
+              related += '</div></div>'
+
+          schema = '{"@context":"https://schema.org","@type":"Article","headline":"'+titre+'","datePublished":"'+datetime.now().strftime("%Y-%m-%d")+'","publisher":{"@type":"Organization","name":"Le Club Sans Gluten","url":"https://leclubsansgluten.com"}}'
+
+          img = 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=1200&auto=format&fit=crop'
+
+          template = open('template.html').read()
+          html = template
+          html = html.replace('[TITRE_SEO]', titre)
+          html = html.replace('[TITRE_ARTICLE]', titre)
+          html = html.replace('[SLUG]', slug)
+          html = html.replace('[META_DESCRIPTION]', meta)
+          html = html.replace('[CATEGORIE]', cat)
+          html = html.replace('[CATEGORIE_LABEL]', label)
+          html = html.replace('[CATEGORIE_EMOJI]', emoji)
+          html = html.replace('[DATE_PUBLICATION]', date)
+          html = html.replace('[TEMPS_LECTURE]', temps)
+          html = html.replace('[IMAGE_URL]', img)
+          html = html.replace('[CTA_BOX]', cta)
+          html = html.replace('[DISCLAIMER]', disclaimer)
+          html = html.replace('[SCHEMA_JSON]', schema)
+          html = html.replace('[MAILLAGE_INTERNE]', related)
+          html = html.replace('[FAQ_BLOCK]', faq)
+          html = html.replace('[CONTENU_ARTICLE]', contenu)
+
+          os.makedirs(cat, exist_ok=True)
+          outpath = cat + '/' + slug + '.html'
+          open(outpath, 'w').write(html)
+          open('_slug.txt', 'w').write(slug)
+          print('Article cree : ' + outpath + ' | ' + str(len(contenu.split())) + ' mots')
+          PYEOF
+
+      - name: Mettre a jour index categorie
+        run: |
+          python3 << 'PYEOF'
+          import os
+          cat = os.environ.get('CATEGORIE', 'guides')
+          labels = {'recettes':'Recettes','sante':'Sante','farines':'Farines','guides':'Conseils'}
+          emojis = {'recettes':'🍞','sante':'🌿','farines':'⚖️','guides':'📖'}
+          label = labels.get(cat, cat)
+          emoji = emojis.get(cat, '')
+          files = sorted([f for f in os.listdir(cat) if f.endswith('.html') and f != 'index.html'], reverse=True)
+          cards = ''
+          for f in files[:60]:
+              title = f.replace('.html','').replace('-',' ').title()
+              cards += '<a href="/'+cat+'/'+f+'" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&q=80" alt="'+title+'" loading="lazy"/></div><div class="card-body"><div class="card-cat">'+emoji+' '+label+'</div><div class="card-title">'+title+'</div></div></a>'
+          idx = '''<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>'''+emoji+' '+label+''' sans gluten — Le Club Sans Gluten</title><link rel="preconnect" href="https://fonts.googleapis.com"/><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet"/><link rel="stylesheet" href="/assets/style.css"/></head><body>
+          <div class="top-bar">📚 <a href="https://www.whynottraining.fr/ed790464" target="_blank">La Bible des Farines Sans Gluten</a> → <a href="https://www.whynottraining.fr/ed790464" target="_blank">Je le veux</a></div>
+          <header class="site-header"><a href="/" class="logo-wrap"><div class="logo">Le Club<em> Sans Gluten</em></div><span class="logo-sub">Le site info sans gluten N°1</span></a></header>
+          <nav class="site-nav"><div class="site-nav-inner"><a href="/recettes/">🍞 Recettes</a><a href="/sante/">🌿 Sante</a><a href="/farines/">⚖️ Farines</a><a href="/guides/">📖 Conseils</a></div></nav>
+          <div class="home-wrap"><div class="section-head"><h1 class="section-title">'''+emoji+' '+label+'''</h1><span style="font-size:.78rem;color:var(--gray)">'''+str(len(files))+''' articles</span></div>
+          <div class="cat-search-bar"><input type="text" class="cat-search-input" placeholder="🔍 Rechercher..." id="catSearch"/></div>
+          <div class="articles-grid" id="grid">'''+cards+'''</div></div>
+          <script>var c=document.querySelectorAll('.card');document.getElementById('catSearch').addEventListener('input',function(){var q=this.value.toLowerCase();c.forEach(function(x){var t=x.querySelector('.card-title');if(t)x.style.display=t.textContent.toLowerCase().indexOf(q)>-1?'':'none';});});</script>
+          <footer class="site-footer"><div class="footer-inner"><div class="footer-logo">Le Club <span>Sans Gluten</span></div><p class="footer-legal">© 2025 Le Club Sans Gluten</p></div></footer>
+          </body></html>'''
+          open(cat+'/index.html','w').write(idx)
+          print('Index mis a jour : '+str(len(files))+' articles')
+          PYEOF
+
+      - name: Commit et push
+        run: |
+          git config --global user.name 'Robot SEO'
+          git config --global user.email 'bot@leclubsansgluten.com'
+          git add .
+          SLUG=$(cat _slug.txt 2>/dev/null || echo "article")
+          git commit -m "✨ Nouvel article $CATEGORIE : $SLUG" || echo "Rien"
+          git push
