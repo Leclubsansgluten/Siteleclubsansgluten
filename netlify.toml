@@ -1,0 +1,30 @@
+[[redirects]]
+  from = "/recettes"
+  to = "/recettes/"
+  status = 301
+
+[[redirects]]
+  from = "/sante"
+  to = "/sante/"
+  status = 301
+
+[[redirects]]
+  from = "/farines"
+  to = "/farines/"
+  status = 301
+
+[[redirects]]
+  from = "/guides"
+  to = "/guides/"
+  status = 301
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
