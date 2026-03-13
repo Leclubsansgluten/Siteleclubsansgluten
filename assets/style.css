@@ -292,3 +292,35 @@ button{cursor:pointer;font-family:inherit}
   .footer-links{gap:.75rem}
   .header-search-wrap{max-width:160px}
 }
+
+/* ── Maillage interne ────────────────── */
+.related-articles {
+  margin: 2.5rem 0;
+  padding: 1.5rem;
+  background: var(--cream);
+  border-left: 3px solid var(--gold);
+  border-radius: 8px;
+}
+.related-articles h3 {
+  font-size: .85rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--gold);
+  margin-bottom: 1rem;
+  font-family: var(--sans);
+}
+.related-links {
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+}
+.related-link {
+  color: var(--ink);
+  text-decoration: none;
+  font-size: .92rem;
+  font-family: var(--sans);
+  transition: color .2s;
+}
+.related-link:hover {
+  color: var(--gold);
+}

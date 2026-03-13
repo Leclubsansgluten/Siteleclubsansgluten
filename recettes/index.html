@@ -5,8 +5,17 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet"/>
+<link rel="canonical" href="https://leclubsansgluten.com/recettes/"/>
 <link rel="stylesheet" href="../assets/style.css"/>
-</head>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://leclubsansgluten.com/"},
+    {"@type": "ListItem", "position": 2, "name": "Recettes", "item": "https://leclubsansgluten.com/recettes/"}
+  ]
+}
+</script></head>
 <body>
 <div class="top-bar">📚 <a href="https://www.whynottraining.fr/ed790464" target="_blank">La Bible des Farines Sans Gluten</a> — Maitrise les farines sans gluten facilement → <a href="https://www.whynottraining.fr/ed790464" target="_blank">Je le veux</a></div>
 <header class="site-header">
@@ -19,7 +28,7 @@
     <div class="search-results" id="searchResults"></div>
   </div>
 </header>
-<nav class="site-nav"><div class="site-nav-inner"><a href="../recettes/" class="active">🍞 Recettes</a><a href="../sante/">🌿 Sante</a><a href="../farines/">⚖️ Farines</a><a href="../guides/">📖 Conseils</a></div></nav>
+<nav class="site-nav"><div class="site-nav-inner"><a href="../recettes/" class="active">🍞 Recettes</a><a href="../sante/">🌿 Santé</a><a href="../farines/">⚖️ Farines</a><a href="../guides/">📖 Conseils</a></div></nav>
 <title>🍞 Recettes sans gluten — Le Club Sans Gluten</title>
 <meta name="description" content="Toutes nos recettes sans gluten testees et approuvees par notre communaute de 100 000 membres."/>
 <meta property="og:title" content="🍞 Recettes sans gluten — Le Club Sans Gluten"/>
@@ -38,35 +47,58 @@
     <span style="font-size:.78rem;color:var(--gray)">16 articles</span>
   </div>
   <div class="subcats">
-      <button class="subcat active" onclick="filterCat('toutes',this)">Toutes</button>
+      <button class="subcat active" onclick="filterCat('toutes',this)">🍽️ Toutes</button>
       <button class="subcat" onclick="filterCat('pain',this)">🍞 Pain</button>
-      <button class="subcat" onclick="filterCat('gateaux',this)">🎂 Gateaux</button>
-      <button class="subcat" onclick="filterCat('crepes',this)">🥞 Crepes</button>
+      <button class="subcat" onclick="filterCat('gateaux',this)">🎂 Gâteaux</button>
+      <button class="subcat" onclick="filterCat('crepes',this)">🥞 Crêpes</button>
       <button class="subcat" onclick="filterCat('plats',this)">🍽️ Plats</button>
       <button class="subcat" onclick="filterCat('soupes',this)">🍲 Soupes</button>
     </div>
-    <script>
-    function filterCat(cat,btn){
-      document.querySelectorAll('.subcat').forEach(function(b){b.classList.remove('active')});
-      btn.classList.add('active');
-      document.querySelectorAll('.cat-search-input').forEach(function(i){i.value=''});
-      // Filter would need JS data - show all for now
-    }
-    </script>
   <div class="cat-search-bar">
-    <input type="text" class="cat-search-input" placeholder="🔍 Rechercher dans Recettes..." id="catSearch" autocomplete="off"/>
+    <input type="text" class="cat-search-input" placeholder="🔍 Rechercher une recette..." id="catSearch" autocomplete="off"/>
   </div>
   <script>
-  var allCards=document.querySelectorAll('.card');
-  document.getElementById('catSearch').addEventListener('input',function(){
-    var q=this.value.toLowerCase();
-    allCards.forEach(function(c){
-      var t=c.querySelector('.card-title');
-      if(t)c.style.display=t.textContent.toLowerCase().indexOf(q)>-1?'':'none';
+  var currentCat = 'toutes';
+
+  function filterCat(cat, btn) {
+    currentCat = cat;
+    document.querySelectorAll('.subcat').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    document.getElementById('catSearch').value = '';
+    applyFilters();
+  }
+
+  function detectCat(card) {
+    // Priorité 1 : attribut data-cat explicite
+    var cat = card.getAttribute('data-cat');
+    if (cat) return cat;
+    // Priorité 2 : détecter depuis le slug de l'URL
+    var href = card.getAttribute('href') || '';
+    var slug = href.split('/').pop().replace('.html','').toLowerCase();
+    var title = (card.querySelector('.card-title') || {}).textContent || '';
+    var text = (slug + ' ' + title).toLowerCase();
+    if (/pain|baguette|mie|brioche|chataigne/.test(text)) return 'pain';
+    if (/crepe|galette|pancake|sarrasin/.test(text)) return 'crepes';
+    if (/gateau|cake|brownie|cookie|muffin|tarte|citron|tatin|dessert/.test(text)) return 'gateaux';
+    if (/soupe|veloute|minestrone|bouillon/.test(text)) return 'soupes';
+    if (/lasagne|quiche|pizza|plat|gratin/.test(text)) return 'plats';
+    return 'toutes'; // si aucune correspondance → toujours visible
+  }
+
+  function applyFilters() {
+    var q = document.getElementById('catSearch').value.toLowerCase();
+    document.querySelectorAll('.card').forEach(function(c) {
+      var title = c.querySelector('.card-title');
+      var cardCat = detectCat(c);
+      var matchCat = (currentCat === 'toutes' || cardCat === currentCat);
+      var matchSearch = !q || (title && title.textContent.toLowerCase().indexOf(q) > -1);
+      c.style.display = (matchCat && matchSearch) ? '' : 'none';
     });
-  });
+  }
+
+  document.getElementById('catSearch').addEventListener('input', applyFilters);
   </script>
-  <div class="articles-grid"><a href="../recettes/pain-rustique-farine-chataigne.html" class="card">
+  <div class="articles-grid"><a href="../recettes/pain-rustique-farine-chataigne.html" class="card" data-cat="pain">
   <div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&q=80" alt="Pain rustique sans gluten à la farine de châtaigne" loading="lazy"/></div>
   <div class="card-body">
     <div class="card-cat">🍞 Recettes</div>
@@ -74,7 +106,7 @@
     <div class="card-meta"><span>📅 12 mars 2026</span><span>⏱ 6 min</span></div>
   </div>
 </a>
-<a href="../recettes/crepes-sans-gluten-infaillible.html" class="card">
+<a href="../recettes/crepes-sans-gluten-infaillible.html" class="card" data-cat="crepes">
   <div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1519676867240-f03562e64548?w=800&q=80" alt="Crêpes sans gluten légères et dorées (recette infaillible)" loading="lazy"/></div>
   <div class="card-body">
     <div class="card-cat">🍞 Recettes</div>
@@ -82,7 +114,7 @@
     <div class="card-meta"><span>📅 12 mars 2026</span><span>⏱ 4 min</span></div>
   </div>
 </a>
-<a href="../recettes/gateau-chocolat-fondant-sans-gluten.html" class="card">
+<a href="../recettes/gateau-chocolat-fondant-sans-gluten.html" class="card" data-cat="gateaux">
   <div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=800&q=80" alt="Gâteau au chocolat fondant sans gluten ni lactose" loading="lazy"/></div>
   <div class="card-body">
     <div class="card-cat">🍞 Recettes</div>
@@ -90,7 +122,7 @@
     <div class="card-meta"><span>📅 12 mars 2026</span><span>⏱ 6 min</span></div>
   </div>
 </a>
-<a href="../recettes/pizza-sans-gluten-base-croustillante.html" class="card">
+<a href="../recettes/pizza-sans-gluten-base-croustillante.html" class="card" data-cat="plats">
   <div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&q=80" alt="Pizza sans gluten : la base croustillante qui change tout" loading="lazy"/></div>
   <div class="card-body">
     <div class="card-cat">🍞 Recettes</div>
@@ -98,7 +130,7 @@
     <div class="card-meta"><span>📅 12 mars 2026</span><span>⏱ 8 min</span></div>
   </div>
 </a>
-<a href="../recettes/pain-de-mie-sans-gluten-moelleux.html" class="card">
+<a href="../recettes/pain-de-mie-sans-gluten-moelleux.html" class="card" data-cat="pain">
   <div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1598373182133-52452f7691ef?w=800&q=80" alt="Pain de mie sans gluten ultra-moelleux (méthode tangzhong)" loading="lazy"/></div>
   <div class="card-body">
     <div class="card-cat">🍞 Recettes</div>
@@ -106,7 +138,7 @@
     <div class="card-meta"><span>📅 12 mars 2026</span><span>⏱ 10 min</span></div>
   </div>
 </a>
-<a href="../recettes/tarte-tatin-pommes-sans-gluten.html" class="card">
+<a href="../recettes/tarte-tatin-pommes-sans-gluten.html" class="card" data-cat="gateaux">
   <div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1568571780765-9276ac8b75a2?w=800&q=80" alt="Tarte tatin aux pommes sans gluten : la recette parfaite" loading="lazy"/></div>
   <div class="card-body">
     <div class="card-cat">🍞 Recettes</div>
@@ -114,7 +146,7 @@
     <div class="card-meta"><span>📅 12 mars 2026</span><span>⏱ 12 min</span></div>
   </div>
 </a>
-<a href="../recettes/galettes-sarrasin-traditionnelles.html" class="card">
+<a href="../recettes/galettes-sarrasin-traditionnelles.html" class="card" data-cat="crepes">
   <div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1565299543923-37dd37887442?w=800&q=80" alt="Galettes de sarrasin traditionnelles bretonnes sans gluten" loading="lazy"/></div>
   <div class="card-body">
     <div class="card-cat">🍞 Recettes</div>
@@ -122,7 +154,7 @@
     <div class="card-meta"><span>📅 12 mars 2026</span><span>⏱ 5 min</span></div>
   </div>
 </a>
-<a href="../recettes/quiche-lorraine-sans-gluten.html" class="card">
+<a href="../recettes/quiche-lorraine-sans-gluten.html" class="card" data-cat="plats">
   <div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1559650656-5d1d361ad10e?w=800&q=80" alt="Quiche lorraine sans gluten : la recette inratable" loading="lazy"/></div>
   <div class="card-body">
     <div class="card-cat">🍞 Recettes</div>
@@ -130,7 +162,7 @@
     <div class="card-meta"><span>📅 12 mars 2026</span><span>⏱ 9 min</span></div>
   </div>
 </a>
-<a href="../recettes/cookies-sans-gluten-fondants.html" class="card">
+<a href="../recettes/cookies-sans-gluten-fondants.html" class="card" data-cat="gateaux">
   <div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=800&q=80" alt="Cookies sans gluten fondants au chocolat (mieux que les vrais)" loading="lazy"/></div>
   <div class="card-body">
     <div class="card-cat">🍞 Recettes</div>
@@ -138,7 +170,7 @@
     <div class="card-meta"><span>📅 12 mars 2026</span><span>⏱ 5 min</span></div>
   </div>
 </a>
-<a href="../recettes/soupe-veloute-courge-sans-gluten.html" class="card">
+<a href="../recettes/soupe-veloute-courge-sans-gluten.html" class="card" data-cat="soupes">
   <div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1476718406336-bb5a9690ee2a?w=800&q=80" alt="Velouté de courge butternut sans gluten crémeux" loading="lazy"/></div>
   <div class="card-body">
     <div class="card-cat">🍞 Recettes</div>
@@ -146,7 +178,7 @@
     <div class="card-meta"><span>📅 12 mars 2026</span><span>⏱ 4 min</span></div>
   </div>
 </a>
-<a href="../recettes/brownie-sans-gluten-haricots-noirs.html" class="card">
+<a href="../recettes/brownie-sans-gluten-haricots-noirs.html" class="card" data-cat="gateaux">
   <div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=800&q=80" alt="Brownie ultra-fondant sans gluten aux haricots noirs" loading="lazy"/></div>
   <div class="card-body">
     <div class="card-cat">🍞 Recettes</div>
@@ -154,7 +186,7 @@
     <div class="card-meta"><span>📅 12 mars 2026</span><span>⏱ 7 min</span></div>
   </div>
 </a>
-<a href="../recettes/pain-baguette-sans-gluten.html" class="card">
+<a href="../recettes/pain-baguette-sans-gluten.html" class="card" data-cat="pain">
   <div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&q=80" alt="Baguette sans gluten croustillante : enfin la vraie recette" loading="lazy"/></div>
   <div class="card-body">
     <div class="card-cat">🍞 Recettes</div>
@@ -162,7 +194,7 @@
     <div class="card-meta"><span>📅 12 mars 2026</span><span>⏱ 15 min</span></div>
   </div>
 </a>
-<a href="../recettes/lasagnes-sans-gluten-maison.html" class="card">
+<a href="../recettes/lasagnes-sans-gluten-maison.html" class="card" data-cat="plats">
   <div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=800&q=80" alt="Lasagnes sans gluten maison : pâtes fraîches et béchamel" loading="lazy"/></div>
   <div class="card-body">
     <div class="card-cat">🍞 Recettes</div>
@@ -170,7 +202,7 @@
     <div class="card-meta"><span>📅 12 mars 2026</span><span>⏱ 20 min</span></div>
   </div>
 </a>
-<a href="../recettes/muffins-myrtilles-sans-gluten.html" class="card">
+<a href="../recettes/muffins-myrtilles-sans-gluten.html" class="card" data-cat="gateaux">
   <div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1607958996333-41aef7caefaa?w=800&q=80" alt="Muffins aux myrtilles sans gluten moelleux et légers" loading="lazy"/></div>
   <div class="card-body">
     <div class="card-cat">🍞 Recettes</div>
@@ -178,7 +210,7 @@
     <div class="card-meta"><span>📅 12 mars 2026</span><span>⏱ 6 min</span></div>
   </div>
 </a>
-<a href="../recettes/soupe-minestrone-sans-gluten.html" class="card">
+<a href="../recettes/soupe-minestrone-sans-gluten.html" class="card" data-cat="soupes">
   <div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1547592180-85f173990554?w=800&q=80" alt="Minestrone sans gluten complet et nourrissant" loading="lazy"/></div>
   <div class="card-body">
     <div class="card-cat">🍞 Recettes</div>
@@ -186,7 +218,7 @@
     <div class="card-meta"><span>📅 12 mars 2026</span><span>⏱ 8 min</span></div>
   </div>
 </a>
-<a href="../recettes/tarte-citron-meringuee-sans-gluten.html" class="card">
+<a href="../recettes/tarte-citron-meringuee-sans-gluten.html" class="card" data-cat="gateaux">
   <div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1519915028121-7d3463d20b13?w=800&q=80" alt="Tarte au citron meringuée sans gluten : recette légère" loading="lazy"/></div>
   <div class="card-body">
     <div class="card-cat">🍞 Recettes</div>
@@ -220,7 +252,7 @@
       <a href="../glossaire.html">Glossaire</a>
       <a href="../calculateur.html">Convertisseur</a>
     </div>
-    <p class="footer-legal">© 2025 Le Club Sans Gluten · Tous droits reserves</p>
+    <p class="footer-legal">© 2026 Le Club Sans Gluten · Tous droits reserves</p>
     <p class="footer-disclaimer">Les informations de ce site sont donnees a titre informatif et ne remplacent pas un avis medical professionnel.</p>
   </div>
 </footer>
