@@ -66,19 +66,19 @@
   <div class="testimonials-section">
     <h2 class="testimonials-title">Ce que dit notre communaute</h2>
     <div class="testimonials-grid">
-      <div class="testimonial-card"><div class="testimonial-stars">★★★★★</div><p class="testimonial-text">Ce site m'a sauve la mise quand j'ai decouvert mon intolerance. Clair, complet, fiable.</p><p class="testimonial-name">— Sophie M.</p></div>
-      <div class="testimonial-card"><div class="testimonial-stars">★★★★★</div><p class="testimonial-text">Enfin un site serieux sur le sans gluten, avec de vraies recettes testees. Merci !</p><p class="testimonial-name">— Isabelle T.</p></div>
+      <div class="testimonial-card"><div class="testimonial-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><p class="testimonial-text">Ce site m'a sauve la mise quand j'ai decouvert mon intolerance. Clair, complet, fiable.</p><p class="testimonial-name">Sophie M.</p></div>
+      <div class="testimonial-card"><div class="testimonial-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><p class="testimonial-text">Enfin un site serieux sur le sans gluten, avec de vraies recettes testees. Merci !</p><p class="testimonial-name">Isabelle T.</p></div>
     </div>
   </div>
 </article>
 <div class="popup-overlay" id="popup">
   <div class="popup-box"><div class="popup-box-inner">
     <button class="popup-close" onclick="document.getElementById('popup').classList.remove('open')">✕</button>
-    <img src="/assets/guide.png" alt="Guide gratuit sans gluten" style="width:100%;display:block"/>
-    <div class="popup-content">
-      <h3>🎁 Ton guide de survie OFFERT</h3>
-      <p>Rejoins 20 000 femmes qui vivent sans gluten sans se priver.</p>
-      <a href="https://www.whynottraining.fr/08c32d2c-1fbf916c-b0fd38be-d95c800f-ee160319-0993e605" target="_blank" style="display:block;text-align:center;padding:.9rem;background:var(--gold);color:var(--ink);font-weight:700;border-radius:6px;font-size:.95rem">Je veux mon guide gratuit →</a>
+    <div class="popup-content" style="padding:2rem">
+      <div style="font-size:2.5rem;text-align:center;margin-bottom:.75rem">🎁</div>
+      <h3 style="text-align:center;font-size:1.2rem;margin-bottom:.5rem">Ton guide de survie OFFERT</h3>
+      <p style="text-align:center">Rejoins 20 000 femmes qui vivent sans gluten sans se priver.</p>
+      <a href="https://www.whynottraining.fr/08c32d2c-1fbf916c-b0fd38be-d95c800f-ee160319-0993e605" target="_blank" style="display:block;text-align:center;padding:.9rem;background:var(--gold);color:var(--ink);font-weight:700;border-radius:6px;font-size:.95rem;margin-top:1.25rem">Je veux mon guide gratuit →</a>
     </div>
   </div></div>
 </div>
@@ -112,6 +112,38 @@ window.addEventListener('scroll',function(){
   if(prog){var a=document.querySelector('.article-body');if(a){var pct=Math.min(100,Math.max(0,Math.round(-a.getBoundingClientRect().top/a.offsetHeight*100)));prog.style.width=pct+'%';}}
 });
 setTimeout(function(){if(!localStorage.getItem('popup_shown')){document.getElementById('popup').classList.add('open');localStorage.setItem('popup_shown','1');}},8000);
+
+// Recherche fonctionnelle
+var searchIndex=[
+  {t:'Recettes sans gluten',u:'/recettes/',c:'Recettes'},
+  {t:'Sante et Intolerances',u:'/sante/',c:'Sante'},
+  {t:'Comparatifs Farines',u:'/farines/',c:'Farines'},
+  {t:'Guides et Conseils',u:'/guides/',c:'Conseils'},
+  {t:'Pain rustique farine chataigne',u:'/recettes/pain-rustique-farine-chataigne.html',c:'Recettes'},
+  {t:'Crepes sans gluten infaillibles',u:'/recettes/crepes-sans-gluten-infaillible.html',c:'Recettes'},
+  {t:'Gateau chocolat fondant sans gluten',u:'/recettes/gateau-chocolat-fondant-sans-gluten.html',c:'Recettes'},
+  {t:'Pizza sans gluten base croustillante',u:'/recettes/pizza-sans-gluten-base-croustillante.html',c:'Recettes'},
+  {t:'7 symptomes intolerance gluten',u:'/sante/7-symptomes-intolerance-gluten.html',c:'Sante'},
+  {t:'Gluten et intestin permeable',u:'/sante/gluten-et-intestin-permeable.html',c:'Sante'},
+  {t:'Guide debuter sans gluten',u:'/guides/guide-debuter-sans-gluten.html',c:'Conseils'},
+  {t:'Farine riz vs sarrasin',u:'/farines/farine-riz-vs-sarrasin.html',c:'Farines'},
+  {t:'Top 8 farines sans gluten',u:'/farines/top-8-farines-sans-gluten-2025.html',c:'Farines'},
+  {t:'Voyage Europe sans gluten',u:'/guides/voyage-europe-sans-gluten.html',c:'Conseils'}
+];
+var inp=document.getElementById('headerSearch');
+var res=document.getElementById('searchResults');
+if(inp&&res){
+  inp.addEventListener('input',function(){
+    var q=this.value.toLowerCase().trim();
+    if(q.length<2){res.style.display='none';return;}
+    var matches=searchIndex.filter(function(x){return x.t.toLowerCase().indexOf(q)>-1;}).slice(0,5);
+    if(!matches.length){res.style.display='none';return;}
+    res.innerHTML=matches.map(function(x){return'<a href="'+x.u+'" class="search-result-item"><span class="search-result-cat">'+x.c+'</span><span class="search-result-title">'+x.t+'</span></a>';}).join('');
+    res.style.display='block';
+  });
+  document.addEventListener('click',function(e){if(!inp.contains(e.target)&&!res.contains(e.target))res.style.display='none';});
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter'&&res.querySelector('a')){window.location=res.querySelector('a').href;}});
+}
 </script>
 </body>
 </html>
