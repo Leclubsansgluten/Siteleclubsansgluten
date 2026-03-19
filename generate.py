@@ -1,437 +1,300 @@
 #!/usr/bin/env python3
-import sys, os, json
-sys.path.insert(0, '/home/claude')
-sys.path.insert(0, '/home/claude/leclubsansgluten')
+import os, re, json, subprocess, urllib.request
+from datetime import datetime
 
-from imgs import IMG_GUIDE, IMG_BIBLE
-from articles_data import ARTICLES
-from article_bodies import get_body
-from components import (header, footer, share_bar, disclaimer, cta_box,
-    popup_html, faq_block, read_progress, testimonials_block,
-    head_tags, set_search_data, SALE_URL, GUIDE_URL, DOMAIN, CAT_LABELS, CAT_EMOJI)
+API_KEY      = os.environ.get('ANTHROPIC_API_KEY', '')
+PEXELS_KEY   = os.environ.get('PEXELS_API_KEY', '')
+TODAY_ISO = datetime.now().strftime('%Y-%m-%d')
+MONTHS    = ['janvier','février','mars','avril','mai','juin','juillet','août',
+             'septembre','octobre','novembre','décembre']
+d         = datetime.now()
+DATE_FR   = f"{d.day} {MONTHS[d.month-1]} {d.year}"
 
-BASE = '/home/claude/leclubsansgluten'
-
-def date_str(offset=0):
-    from datetime import datetime, timedelta
-    d = datetime.now() - timedelta(days=offset)
-    months=['janvier','fevrier','mars','avril','mai','juin','juillet','aout','septembre','octobre','novembre','decembre']
-    return f"{d.day} {months[d.month-1]} {d.year}"
-
-set_search_data(ARTICLES)
-
-def card_html(a, depth=""):
-    return f"""<a href="{depth}{a['cat']}/{a['id']}.html" class="card">
-  <div class="card-img-wrap"><img class="card-img" src="{a['img']}" alt="{a['title']}" loading="lazy"/></div>
-  <div class="card-body">
-    <div class="card-cat">{CAT_EMOJI.get(a['cat'],'')} {CAT_LABELS.get(a['cat'],'')}</div>
-    <div class="card-title">{a['title']}</div>
-    <div class="card-meta"><span>📅 {date_str()}</span><span>⏱ {a['rt']}</span></div>
-  </div>
-</a>"""
-
-def related_articles(current_id, cat, count=3):
-    related = [a for a in ARTICLES if a['id'] != current_id and a['cat'] == cat][:count]
-    if len(related) < count:
-        related += [a for a in ARTICLES if a['id'] != current_id and a['cat'] != cat][:count-len(related)]
-    return related[:count]
-
-FAQS = {
-    "recettes": [
-        {"q":"Peut-on utiliser ces recettes si on a la maladie coeliaque ?","a":"Oui, toutes nos recettes sont concues sans gluten. Veillez cependant a verifier que vos ingredients portent la mention sans gluten, car certains produits peuvent contenir des traces."},
-        {"q":"Puis-je remplacer une farine par une autre dans ces recettes ?","a":"Chaque farine a des proprietes differentes. Consultez notre guide des farines pour comprendre les substitutions possibles. En general, un mix de farines donne de meilleurs resultats."},
-        {"q":"Pourquoi mon pain sans gluten ne leve pas ?","a":"Le pain sans gluten necessite souvent du psyllium pour remplacer le gluten. Verifiez aussi que votre levure est active et que l'eau n'est pas trop chaude (max 40°C)."},
-    ],
-    "sante": [
-        {"q":"Comment savoir si je suis intolérante au gluten ?","a":"Consultez votre medecin generaliste qui prescrira un dosage des anticorps anti-transglutaminase IgA. Ne supprimez pas le gluten avant ce test."},
-        {"q":"La sensibilite au gluten non-coeliaque existe-t-elle vraiment ?","a":"Oui, la communaute scientifique reconnait ce syndrome. Il se distingue de la maladie coeliaque par l'absence de lesions intestinales et d'anticorps specifiques."},
-        {"q":"Combien de temps pour ressentir les effets du regime sans gluten ?","a":"La plupart des personnes ressentent une amelioration en 2 a 4 semaines. La guerison intestinale complete peut prendre 1 a 2 ans pour les coeliaquees."},
-    ],
-    "farines": [
-        {"q":"Quelle est la meilleure farine sans gluten pour debuter ?","a":"La farine de riz est la plus polyvalente et la plus accessible. Associez-la a de la fecule de mais pour de meilleurs resultats en patisserie."},
-        {"q":"Peut-on utiliser une seule farine dans les recettes sans gluten ?","a":"La plupart du temps, non. Les melanges de farines donnent de bien meilleurs resultats car chaque farine apporte des proprietes complementaires."},
-        {"q":"Ou acheter des farines sans gluten pas cheres ?","a":"Les grandes surfaces proposent de plus en plus de farines sans gluten a prix raisonnable. Les boutiques bio et les achats en ligne en vrac sont aussi de bonnes options."},
-    ],
-    "guides": [
-        {"q":"Par ou commencer quand on decouvre son intolerance au gluten ?","a":"Commencez par lire les etiquettes et eliminer les sources evidentes de gluten. Notre guide de survie gratuit vous detaille toutes les etapes."},
-        {"q":"Le sans gluten est-il vraiment plus cher ?","a":"Les produits transformes sans gluten coutent plus cher, mais une alimentation basee sur des produits naturellement sans gluten (riz, legumes, viandes) n'est pas plus onereuse."},
-        {"q":"Peut-on manger sans gluten au restaurant ?","a":"Oui, de plus en plus de restaurants proposent des options sans gluten. Posez toujours des questions sur la contamination croisee et privilegiez les cuisines naturellement sans gluten."},
-    ],
+LABELS = {'recettes':'Recettes','sante':'Santé','farines':'Farines','guides':'Conseils'}
+EMOJIS = {'recettes':'🍞','sante':'🌿','farines':'⚖️','guides':'📖'}
+DESCS  = {
+    'recettes': 'Recettes sans gluten testées et approuvées par notre communauté de 100 000 membres.',
+    'sante':    'Symptômes, diagnostics, conseils santé pour vivre mieux sans gluten. Articles vérifiés.',
+    'farines':  "Comparatifs complets des farines sans gluten. Guides d'utilisation pratiques.",
+    'guides':   'Guides pratiques pour bien vivre sans gluten : débuter, voyager, cuisiner avec un petit budget.'
+}
+# Images de fallback si Pexels échoue
+IMAGES_FALLBACK = {
+    'recettes': 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1200&q=80',
+    'sante':    'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=1200&q=80',
+    'farines':  'https://images.unsplash.com/photo-1612200606649-1e95b16fcf2c?w=1200&q=80',
+    'guides':   'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=1200&q=80',
 }
 
-# ── ARTICLE PAGES ──────────────────────────────────────────────────
-for i, a in enumerate(ARTICLES):
-    cat, aid, title = a['cat'], a['id'], a['title']
-    os.makedirs(f"{BASE}/{cat}", exist_ok=True)
+def get_pexels_image(titre, cat):
+    """Cherche une photo Pexels en lien avec le titre de l'article."""
+    import urllib.request, urllib.parse, json as json2
+    try:
+        # Nettoyer le titre pour la recherche
+        query = titre.replace(':', '').replace('—', '').strip()
+        # Limiter à 5 mots pour une meilleure pertinence
+        query = ' '.join(query.split()[:5])
+        url = f'https://api.pexels.com/v1/search?query={urllib.parse.quote(query)}&per_page=1&orientation=landscape'
+        req = urllib.request.Request(url, headers={'Authorization': PEXELS_KEY})
+        data = json2.loads(urllib.request.urlopen(req, timeout=10).read())
+        if data.get('photos'):
+            img_url = data['photos'][0]['src']['large2x']
+            print(f'  📸 Pexels: {img_url[:60]}...')
+            return img_url
+    except Exception as e:
+        print(f'  ⚠️ Pexels échoué: {e}')
+    return IMAGES_FALLBACK.get(cat, IMAGES_FALLBACK['recettes'])
 
-    body = get_body(aid, title, a['excerpt'], cat)
-    related = related_articles(aid, cat)
-    url = f"{DOMAIN}/{cat}/{aid}.html"
-    faqs = FAQS.get(cat, [])
-    cta_type = "guide" if cat == "sante" else "bible"
+def total_articles():
+    count = 0
+    for root, dirs, files in os.walk('.'):
+        for f in files:
+            if f.endswith('.html') and f not in ['index.html','template.html',
+               'a-propos.html','glossaire.html','calculateur.html',
+               'mentions-legales.html','cgv.html']:
+                count += 1
+    return count
 
-    related_html = "\n".join([f"""<a href="../{r['cat']}/{r['id']}.html" class="related-card">
-  <img src="{r['img']}" alt="{r['title']}" loading="lazy"/>
-  <div class="related-card-body">
-    <div class="related-card-cat">{CAT_EMOJI.get(r['cat'],'')} {CAT_LABELS.get(r['cat'],'')}</div>
-    <div class="related-card-title">{r['title']}</div>
-  </div>
-</a>""" for r in related])
+def extract(tag, text):
+    m = re.search(r'\['+tag+r'\](.*?)\[/'+tag+r'\]', text, re.DOTALL)
+    return m.group(1).strip() if m else ''
 
-    schema = json.dumps({
-        "@context": "https://schema.org",
-        "@type": "Article",
-        "headline": title,
-        "description": a['excerpt'],
-        "image": a['img'],
-        "datePublished": "2025-01-01",
-        "publisher": {"@type":"Organization","name":"Le Club Sans Gluten","url": DOMAIN}
-    }, ensure_ascii=False)
+def call_api(prompt):
+    payload = json.dumps({
+        "model": "claude-sonnet-4-20250514",
+        "max_tokens": 8000,
+        "messages": [{"role": "user", "content": prompt}]
+    })
+    result = subprocess.run(
+        ['curl','-s','https://api.anthropic.com/v1/messages',
+         '-H', f'x-api-key: {API_KEY}',
+         '-H', 'anthropic-version: 2023-06-01',
+         '-H', 'content-type: application/json',
+         '-d', payload],
+        capture_output=True, text=True, timeout=120
+    )
+    data = json.loads(result.stdout)
+    return data['content'][0]['text']
 
-    html = header(cat, depth="..") + f"""
-{head_tags(title + " — Le Club Sans Gluten", a['excerpt'], a['img'], url, depth="..")}
-<script type="application/ld+json">{schema}</script>
-{read_progress()}
-<div class="breadcrumb">
-  <a href="/">Accueil</a><span>›</span>
-  <a href="/{cat}/">{CAT_EMOJI.get(cat,'')} {CAT_LABELS.get(cat,'')}</a><span>›</span>
-  <span>{title}</span>
-</div>
-<article class="article-wrap">
-  <div class="article-cat">{CAT_EMOJI.get(cat,'')} {CAT_LABELS.get(cat,'')}</div>
-  <h1 class="article-title">{title}</h1>
-  <div class="article-meta">
-    <span>📅 {date_str(i%7)}</span>
-    <span>⏱ {a['rt']} de lecture</span>
-    <span>✍️ Equipe Le Club Sans Gluten</span>
-  </div>
-  <img class="article-hero" src="{a['img']}" alt="{title}"/>
-  <div class="article-body">{body}</div>
-  {cta_box(cta_type)}
-  {share_bar(title, url)}
-  {disclaimer() if cat == 'sante' else ''}
-  {faq_block(faqs) if faqs else ''}
-  {testimonials_block()}
-  <div class="related">
-    <h2>Tu pourrais aussi aimer</h2>
-    <div class="related-grid">{related_html}</div>
-  </div>
-</article>
-{popup_html()}
-""" + footer(depth="..")
+def build_index(cat):
+    label = LABELS[cat]
+    emoji = EMOJIS[cat]
+    desc  = DESCS[cat]
 
-    with open(f"{BASE}/{cat}/{aid}.html", 'w', encoding='utf-8') as f:
-        f.write(html)
+    files_with_date = [(os.path.getmtime(os.path.join(cat,f)), f)
+                       for f in os.listdir(cat)
+                       if f.endswith('.html') and f != 'index.html']
+    files_with_date.sort(reverse=True)
+    files = [f for _, f in files_with_date]
 
-print(f"Generated {len(ARTICLES)} article pages")
+    cards = ''
+    for f in files[:60]:
+        fhtml = open(os.path.join(cat, f)).read()
+        tm = re.search(r'<title>(.*?) — Le Club', fhtml)
+        ft = tm.group(1) if tm else f.replace('-',' ').replace('.html','').capitalize()
+        im = re.search(r'<img class="article-hero"[^>]+src="([^"]+)"', fhtml)
+        if not im:
+            im = re.search(r'"image":"([^"]+)"', fhtml)
+        fimg = re.sub(r'w=\d+', 'w=600', im.group(1)) if im else IMAGES[3]
+        cards += f'<a href="/{cat}/{f}" class="card"><div class="card-img-wrap"><img class="card-img" src="{fimg}" alt="{ft}" loading="lazy"/></div><div class="card-body"><div class="card-cat">{emoji} {label}</div><div class="card-title">{ft}</div></div></a>\n'
 
-# ── CATEGORY PAGES ─────────────────────────────────────────────────
-for cat, label in CAT_LABELS.items():
-    emoji = CAT_EMOJI.get(cat,'')
-    cat_articles = [a for a in ARTICLES if a['cat'] == cat]
-    cards = "\n".join([card_html(a, depth="../") for a in cat_articles])
-    subcat_html = ""
+    subcats = ''
     if cat == 'recettes':
-        subcat_html = """<div class="subcats">
-      <button class="subcat active" onclick="filterCat('toutes',this)">Toutes</button>
-      <button class="subcat" onclick="filterCat('pain',this)">🍞 Pain</button>
-      <button class="subcat" onclick="filterCat('gateaux',this)">🎂 Gateaux</button>
-      <button class="subcat" onclick="filterCat('crepes',this)">🥞 Crepes</button>
-      <button class="subcat" onclick="filterCat('plats',this)">🍽️ Plats</button>
-      <button class="subcat" onclick="filterCat('soupes',this)">🍲 Soupes</button>
-    </div>
-    <script>
-    function filterCat(cat,btn){
-      document.querySelectorAll('.subcat').forEach(function(b){b.classList.remove('active')});
-      btn.classList.add('active');
-      document.querySelectorAll('.cat-search-input').forEach(function(i){i.value=''});
-      // Filter would need JS data - show all for now
-    }
-    </script>"""
+        subcats = '''<div class="subcats">
+<button class="subcat active" onclick="filterCat('toutes',this)">🍽️ Toutes</button>
+<button class="subcat" onclick="filterCat('pain',this)">🍞 Pain</button>
+<button class="subcat" onclick="filterCat('gateaux',this)">🎂 Gâteaux</button>
+<button class="subcat" onclick="filterCat('crepes',this)">🥞 Crêpes</button>
+<button class="subcat" onclick="filterCat('plats',this)">🍽️ Plats</button>
+<button class="subcat" onclick="filterCat('soupes',this)">🍲 Soupes</button>
+</div>
+<script>
+var currentCat="toutes";
+function filterCat(c,b){currentCat=c;document.querySelectorAll(".subcat").forEach(function(x){x.classList.remove("active")});b.classList.add("active");document.getElementById("catSearch").value="";applyFilters();}
+function detectCat(c){var cat=c.getAttribute("data-cat");if(cat)return cat;var href=c.getAttribute("href")||"";var slug=href.split("/").pop().replace(".html","").toLowerCase();var title=(c.querySelector(".card-title")||{}).textContent||"";var text=slug+" "+title.toLowerCase();if(/pain|baguette|mie|brioche|chataigne/.test(text))return"pain";if(/crepe|galette|pancake|sarrasin/.test(text))return"crepes";if(/gateau|cake|brownie|cookie|muffin|tarte|citron|tatin|dessert/.test(text))return"gateaux";if(/soupe|veloute|minestrone|bouillon/.test(text))return"soupes";if(/lasagne|quiche|pizza|plat|gratin/.test(text))return"plats";return"toutes";}
+function applyFilters(){var q=document.getElementById("catSearch").value.toLowerCase();document.querySelectorAll(".card").forEach(function(c){var t=c.querySelector(".card-title");var cc=detectCat(c);c.style.display=((currentCat==="toutes"||cc===currentCat)&&(!q||(t&&t.textContent.toLowerCase().indexOf(q)>-1)))?"":"none";});}
+</script>'''
 
-    # Category search bar
-    search_bar = f"""<div class="cat-search-bar">
-    <input type="text" class="cat-search-input" placeholder="🔍 Rechercher dans {label}..." id="catSearch" autocomplete="off"/>
-  </div>
-  <script>
-  var allCards=document.querySelectorAll('.card');
-  document.getElementById('catSearch').addEventListener('input',function(){{
-    var q=this.value.toLowerCase();
-    allCards.forEach(function(c){{
-      var t=c.querySelector('.card-title');
-      if(t)c.style.display=t.textContent.toLowerCase().indexOf(q)>-1?'':'none';
-    }});
-  }});
-  </script>"""
+    bc = f'{{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{{"@type":"ListItem","position":1,"name":"Accueil","item":"https://leclubsansgluten.com/"}},{{"@type":"ListItem","position":2,"name":"{label}","item":"https://leclubsansgluten.com/{cat}/"}}]}}'
 
-    html = header(cat, depth="..") + f"""
-{head_tags(emoji + " " + label + " sans gluten — Le Club Sans Gluten", "Toutes nos " + label.lower() + " sans gluten testees et approuvees par notre communaute de 100 000 membres.", depth="..")}
+    idx = f"""<!DOCTYPE html>
+<html lang="fr"><head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>{emoji} {label} sans gluten — Articles et guides — Le Club Sans Gluten</title>
+<meta name="description" content="{desc}"/>
+<link rel="canonical" href="https://leclubsansgluten.com/{cat}/"/>
+<meta property="og:title" content="{label} sans gluten — Le Club Sans Gluten"/>
+<meta property="og:description" content="{desc}"/>
+<meta property="og:type" content="website"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/assets/style.css"/>
+<script type="application/ld+json">{bc}</script>
+</head><body>
+<div class="top-bar">📚 <a href="https://www.whynottraining.fr/ed790464" target="_blank">La Bible des Farines Sans Gluten</a> → <a href="https://www.whynottraining.fr/ed790464" target="_blank">Je le veux</a></div>
+<header class="site-header"><a href="/" class="logo-wrap"><div class="logo">Le Club<em> Sans Gluten</em></div><span class="logo-sub">Le site info sans gluten N°1</span></a><div class="header-search-wrap"><input type="text" class="header-search" placeholder="🔍 Rechercher..." id="headerSearch" autocomplete="off"/><div class="search-results" id="searchResults"></div></div></header>
+<nav class="site-nav"><div class="site-nav-inner"><a href="/recettes/">🍞 Recettes</a><a href="/sante/">🌿 Santé</a><a href="/farines/">⚖️ Farines</a><a href="/guides/">📖 Conseils</a></div></nav>
 <div class="breadcrumb"><a href="/">Accueil</a><span>›</span><span>{emoji} {label}</span></div>
 <div class="home-wrap">
-  <div class="section-head" style="margin-top:1.5rem">
-    <h1 class="section-title">{emoji} {label}</h1>
-    <span style="font-size:.78rem;color:var(--gray)">{len(cat_articles)} articles</span>
-  </div>
-  {subcat_html}
-  {search_bar}
+  <div class="section-head" style="margin-top:1.5rem"><h1 class="section-title">{emoji} {label}</h1><span style="font-size:.78rem;color:var(--gray)">{len(files)} articles</span></div>
+  {subcats}
+  <div class="cat-search-bar"><input type="text" class="cat-search-input" placeholder="🔍 Rechercher dans {label}..." id="catSearch" autocomplete="off"/></div>
   <div class="articles-grid">{cards}</div>
 </div>
-{popup_html()}
-""" + footer(depth="..")
-
-    os.makedirs(f"{BASE}/{cat}", exist_ok=True)
-    with open(f"{BASE}/{cat}/index.html", 'w', encoding='utf-8') as f:
-        f.write(html)
-
-print("Generated 4 category pages")
-
-# ── HOME PAGE ──────────────────────────────────────────────────────
-recettes = [a for a in ARTICLES if a['cat'] == 'recettes'][:6]
-sante = [a for a in ARTICLES if a['cat'] == 'sante'][:4]
-farines = [a for a in ARTICLES if a['cat'] == 'farines'][:4]
-guides = [a for a in ARTICLES if a['cat'] == 'guides'][:4]
-
-def section(title_str, articles_list, cat_id, show_subcats=False):
-    emoji = CAT_EMOJI.get(cat_id,'')
-    cards = "\n".join([card_html(a) for a in articles_list])
-    subcat_html = ""
-    if show_subcats:
-        subcat_html = """<div class="subcats">
-      <button class="subcat active">Toutes</button>
-      <button class="subcat">🍞 Pain</button>
-      <button class="subcat">🎂 Gateaux</button>
-      <button class="subcat">🥞 Crepes</button>
-      <button class="subcat">🍽️ Plats</button>
-      <button class="subcat">🍲 Soupes</button>
-    </div>"""
-    return f"""<div>
-  <div class="section-head">
-    <h2 class="section-title">{emoji} {title_str}</h2>
-    <a class="section-link" href="/{cat_id}/">Tout voir →</a>
+<script>document.getElementById("catSearch").addEventListener("input",function(){{var q=this.value.toLowerCase();if(typeof applyFilters!=="undefined"){{applyFilters();return;}}document.querySelectorAll(".card").forEach(function(c){{var t=c.querySelector(".card-title");if(t)c.style.display=t.textContent.toLowerCase().indexOf(q)>-1?"":"none";}});}});</script>
+<footer class="site-footer"><div class="footer-inner">
+  <div class="footer-logo">Le Club <span>Sans Gluten</span></div>
+  <div class="footer-links">
+    <a href="https://www.whynottraining.fr/08c32d2c-1fbf916c-b0fd38be-d95c800f-ee160319-0993e605" target="_blank">🎁 Guide gratuit</a>
+    <a href="https://www.whynottraining.fr/ed790464" target="_blank">📚 La Bible des Farines</a>
+    <a href="/a-propos.html">À propos</a>
+    <a href="/glossaire.html">Glossaire</a>
   </div>
-  {subcat_html}
-  <div class="articles-grid">{cards}</div>
-</div>"""
-
-# Ticker items
-ticker_items = "✅ Informations verifiees · 👥 100 000 membres · 🔄 Mis a jour chaque jour · 🎁 Guide de survie GRATUIT · 🏆 Site N°1 sans gluten en France · 🍞 Recettes approuvees par la communaute"
-ticker_double = ticker_items + " · " + ticker_items
-ticker_spans = "".join([f"<span>{item.strip()}</span>" for item in ticker_double.split("·")])
-
-home_html = header(depth="") + f"""
-{head_tags("Le Club Sans Gluten — Recettes et conseils sans gluten N°1 en France", "Recettes sans gluten testees, conseils sante, comparatifs de farines. Rejoins 100 000 femmes qui vivent sans gluten sans se priver.", depth="")}
-<script type="application/ld+json">{json.dumps({"@context":"https://schema.org","@type":"WebSite","name":"Le Club Sans Gluten","url":DOMAIN,"description":"Le site d'information sans gluten N1 en France","potentialAction":{"@type":"SearchAction","target":DOMAIN+"/recettes/?q={{search_term_string}}","query-input":"required name=search_term_string"}}, ensure_ascii=False)}</script>
-
-<div class="welcome-hero">
-  <div class="welcome-inner">
-    <span class="welcome-eyebrow">🌿 Le site sans gluten N°1 en France</span>
-    <h1 class="welcome-title">Vis sans gluten,<br/>sans te priver.</h1>
-    <p class="welcome-sub">Recettes testees, conseils sante, comparatifs de farines. Tout ce qu'il faut pour vivre sans gluten en toute confiance. Rejoins 100 000 femmes de notre communaute.</p>
-    <div class="welcome-img-cards">
-      <a class="welcome-img-card" href="{GUIDE_URL}" target="_blank">
-        <img src="/assets/guide.png" alt="Guide de survie de l'intolérante au gluten"/>
-        <div class="welcome-img-card-label">🎁 Guide gratuit — Je le veux</div>
-      </a>
-      <a class="welcome-img-card" href="{SALE_URL}" target="_blank">
-        <img src="/assets/bible.png" alt="La Bible des Farines Sans Gluten"/>
-        <div class="welcome-img-card-label">📚 La Bible des Farines — Decouvrir</div>
-      </a>
-    </div>
+  <div class="footer-links" style="margin-top:.5rem;font-size:.8rem">
+    <a href="/mentions-legales.html">Mentions légales</a>
+    <a href="/cgv.html">CGV</a>
   </div>
-</div>
+  <p class="footer-legal">© 2026 Le Club Sans Gluten · Tous droits réservés</p>
+</div></footer>
+</body></html>"""
 
-<div class="reassurance">
-  <div class="reassurance-track">{ticker_spans}</div>
-</div>
+    open(f'{cat}/index.html', 'w').write(idx)
+    print(f'  ✅ Index {cat} — {len(files)} articles')
 
-<div class="home-wrap">
-  {section("Recettes du moment", recettes, "recettes", show_subcats=True)}
-  <div style="margin:3rem 0">{testimonials_block()}</div>
-  {section("Sante et Intolerances", sante, "sante")}
-  {section("Comparatifs Farines", farines, "farines")}
-  {section("Conseils Pratiques", guides, "guides")}
-</div>
+def build_sitemap():
+    freqs = {'recettes':'daily','sante':'weekly','farines':'weekly','guides':'weekly'}
+    sm = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    sm += f'  <url><loc>https://leclubsansgluten.com/</loc><lastmod>{TODAY_ISO}</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>\n'
+    for c in ['recettes','sante','farines','guides']:
+        sm += f'  <url><loc>https://leclubsansgluten.com/{c}/</loc><lastmod>{TODAY_ISO}</lastmod><changefreq>{freqs[c]}</changefreq><priority>0.9</priority></url>\n'
+        for f in sorted([f for f in os.listdir(c) if f.endswith('.html') and f != 'index.html'], reverse=True):
+            sm += f'  <url><loc>https://leclubsansgluten.com/{c}/{f.replace(".html","")}.html</loc><lastmod>{TODAY_ISO}</lastmod><changefreq>{freqs[c]}</changefreq><priority>0.8</priority></url>\n'
+    sm += '</urlset>'
+    open('sitemap.xml', 'w').write(sm)
+    print(f'  ✅ Sitemap — {sm.count("<url>")} URLs')
 
-{popup_html()}
-""" + footer(depth="")
+    # Ping Google
+    try:
+        urllib.request.urlopen('https://www.google.com/ping?sitemap=https://leclubsansgluten.com/sitemap.xml', timeout=10)
+        print('  ✅ Google pingé')
+    except Exception as e:
+        print(f'  ⚠️ Ping Google: {e}')
 
-with open(f"{BASE}/index.html", 'w', encoding='utf-8') as f:
-    f.write(home_html)
+def generate_article(cat, index_num):
+    label = LABELS[cat]
+    emoji = EMOJIS[cat]
+    prompt = f"""Tu es un expert SEO et rédacteur spécialisé dans l'alimentation sans gluten pour leclubsansgluten.com.
 
-print("Generated home page")
+CATÉGORIE : {cat}
 
-# ── A PROPOS PAGE ──────────────────────────────────────────────────
-apropos_html = header(depth="") + f"""
-{head_tags("A propos — Le Club Sans Gluten", "Decouvrez l'histoire du Club Sans Gluten et notre mission pour aider les femmes intolérantes au gluten.", depth="")}
-<div class="breadcrumb"><a href="/">Accueil</a><span>›</span><span>A propos</span></div>
-<div class="page-wrap">
-  <h1 class="page-title">Notre histoire</h1>
-  <img class="page-hero-img" src="https://images.unsplash.com/photo-1556909211-36987daf7b4d?w=1200&q=80" alt="Cuisine sans gluten"/>
-  <div class="page-body">
-    <p>Le Club Sans Gluten est ne d'une conviction simple : <strong>vivre sans gluten ne devrait pas signifier renoncer au plaisir de manger.</strong> Fonde par une passionnee de nutrition et d'alimentation saine, ce site rassemble aujourd'hui plus de 100 000 femmes en France qui vivent sans gluten au quotidien.</p>
-    <h2>Notre mission</h2>
-    <p>Nous croyons que l'information de qualite change des vies. Trop de femmes passent des annees a chercher des reponses a leurs symptomes, a rater leurs recettes, a se sentir isolees face aux tables de famille ou aux repas de restaurant.</p>
-    <p>Notre mission est de fournir des ressources claires, testees et accessibles pour que chaque femme puisse vivre sans gluten en toute confiance, sans sacrifier le plaisir ni le budget.</p>
-    <h2>Ce que nous faisons</h2>
-    <p>Chaque recette publiee sur ce site a ete testee dans notre cuisine. Chaque article sur la sante est base sur des sources scientifiques serieuses. Chaque comparatif de farines est le resultat de tests reels, pas de simples specifications fabricant.</p>
-    <p>Nous gerons aussi une communaute Facebook de 100 000 membres actives — un espace d'entraide, de partage de recettes et de soutien mutuel.</p>
-    <h2>Nos ressources</h2>
-    <p>Pour aller plus loin, decouvrez notre <a href="{GUIDE_URL}" target="_blank" style="color:var(--gold);font-weight:700">Guide de Survie de l'Intolérante au Gluten</a> (offert gratuitement) et <a href="{SALE_URL}" target="_blank" style="color:var(--gold);font-weight:700">La Bible des Farines Sans Gluten</a>, notre ressource complete pour maitriser la patisserie sans gluten.</p>
-  </div>
-</div>
-{popup_html()}
-""" + footer(depth="")
+Choisis un sujet précis longue traîne pour {cat}, ciblant les femmes françaises 30-55 ans intolérantes au gluten. Sujet non redondant.
 
-with open(f"{BASE}/a-propos.html", 'w', encoding='utf-8') as f:
-    f.write(apropos_html)
+Rédige un article complet 3500 mots minimum avec :
+- Introduction répondant immédiatement à l'intention de recherche
+- 6+ H2 avec mots-clés intégrés naturellement
+- Paragraphes courts (150-200 mots), ton chaleureux d'experte
+- 2+ listes ou tableaux avec données chiffrées
+- FAQ 4 questions réelles Google
 
-# ── GLOSSAIRE PAGE ─────────────────────────────────────────────────
-glossaire_terms = {
-    "A": [
-        ("Amidon modifie","Ingredient present dans de nombreux produits transformes. Peut etre derive du ble et donc contenir du gluten. Toujours verifier la source."),
-        ("Arrow-root","Fecule extraite d'une plante tropicale, naturellement sans gluten. Excellent epaississant transparent pour les sauces."),
-    ],
-    "C": [
-        ("Contamination croisee","Contact accidentel entre aliments sans gluten et sources de gluten. La principale cause de reactions chez les personnes coeliaques."),
-        ("Coeliaque","Personne atteinte de la maladie coeliaque, une maladie auto-immune declenchee par l'ingestion de gluten."),
-    ],
-    "F": [
-        ("Farine de riz","Farine naturellement sans gluten, la plus polyvalente pour la patisserie. Gout neutre, texture legere."),
-        ("Farine de sarrasin","Farine sans gluten au gout prononce de noisette. Ideale pour les galettes bretonnes et les pains rustiques."),
-        ("Fecule de mais","Appele aussi Maizena. Epaississant sans gluten ideal pour les sauces et pour allegerer les preparations."),
-    ],
-    "G": [
-        ("Gluten","Proteine presente dans le ble, le seigle et l'orge. Donne l'elasticite aux pates et du moelleux aux preparations."),
-        ("Gomme xanthane","Agent liant sans gluten qui remplace partiellement les proprietes du gluten dans les preparations."),
-    ],
-    "M": [
-        ("Maladie coeliaque","Maladie auto-immune ou l'ingestion de gluten provoque une reaction immunitaire endommageant l'intestin grele. Touche environ 1% de la population."),
-        ("Malt","Derive de l'orge, le malt contient du gluten. Present dans certaines cereales de petit-dejeuner, biscuits et boissons."),
-    ],
-    "P": [
-        ("Psyllium","Fibre soluble qui agit comme liant dans les preparations sans gluten. Indispensable pour la boulangerie sans gluten."),
-    ],
-    "S": [
-        ("Sans gluten","Designation qui indique qu'un produit contient moins de 20 ppm de gluten, le seuil tolere par la plupart des personnes coeliaques."),
-        ("Sensibilite au gluten non-coeliaque","Condition ou le gluten provoque des symptomes sans les marqueurs biologiques ou les lesions intestinales de la maladie coeliaque."),
-    ],
-    "T": [
-        ("Tapioca","Fecule extraite du manioc, naturellement sans gluten. Donne de la moelleux et de l'elasticite aux preparations."),
-    ],
-}
+FORMAT EXACT :
+[TITRE]titre 60 car max avec accents[/TITRE]
+[SLUG]slug-sans-accents[/SLUG]
+[META]meta description 155 car max[/META]
+[TEMPS]X min[/TEMPS]
+[FAQ_Q1]Question 1[/FAQ_Q1]
+[FAQ_A1]Réponse 1[/FAQ_A1]
+[FAQ_Q2]Question 2[/FAQ_Q2]
+[FAQ_A2]Réponse 2[/FAQ_A2]
+[FAQ_Q3]Question 3[/FAQ_Q3]
+[FAQ_A3]Réponse 3[/FAQ_A3]
+[FAQ_Q4]Question 4[/FAQ_Q4]
+[FAQ_A4]Réponse 4[/FAQ_A4]
+[CONTENU]HTML complet (p, h2, h3, ul, li, strong, em uniquement)[/CONTENU]"""
 
-glossaire_html = header(depth="") + f"""
-{head_tags("Glossaire du sans gluten — Le Club Sans Gluten", "Tous les termes du sans gluten expliques simplement. De la contamination croisee au psyllium.", depth="")}
-<div class="breadcrumb"><a href="/">Accueil</a><span>›</span><span>Glossaire</span></div>
-<div class="page-wrap">
-  <h1 class="page-title">Glossaire du sans gluten</h1>
-  <p style="color:var(--gray);margin-bottom:2rem">Tous les termes importants expliques simplement pour mieux comprendre le monde du sans gluten.</p>
-  <div class="page-body">
-"""
-for letter, terms in glossaire_terms.items():
-    glossaire_html += f'<div class="glossary-letter">{letter}</div>'
-    for term, defn in terms:
-        glossaire_html += f'<p class="glossary-term">{term}</p><p class="glossary-def">{defn}</p>'
+    print(f'  Appel API pour {cat}...')
+    t = call_api(prompt)
 
-glossaire_html += f"""
-  </div>
-  {cta_box("guide")}
-</div>
-{popup_html()}
-""" + footer(depth="")
+    titre   = extract('TITRE', t) or 'Article sans gluten'
+    slug    = re.sub(r'[^a-z0-9-]', '', extract('SLUG', t).lower().replace(' ','-'))[:60] or f'article-{index_num}'
+    meta    = extract('META', t)
+    temps   = extract('TEMPS', t) or '8 min'
+    contenu = extract('CONTENU', t) or '<p>Article en cours.</p>'
+    # Chercher une vraie photo Pexels en lien avec le titre
+    img = get_pexels_image(titre, cat)
 
-with open(f"{BASE}/glossaire.html", 'w', encoding='utf-8') as f:
-    f.write(glossaire_html)
+    faq_html = '<div class="faq-block"><h2>Questions fréquentes</h2>'
+    faq_schema_items = []
+    for j in range(1, 5):
+        q = re.search(r'\[FAQ_Q'+str(j)+r'\](.*?)\[/FAQ_Q'+str(j)+r'\]', t, re.DOTALL)
+        a = re.search(r'\[FAQ_A'+str(j)+r'\](.*?)\[/FAQ_A'+str(j)+r'\]', t, re.DOTALL)
+        if q and a:
+            faq_html += f'<div class="faq-item"><button class="faq-q" onclick="this.parentElement.classList.toggle(\'open\')">{q.group(1).strip()}<span class="faq-icon">+</span></button><div class="faq-a"><p>{a.group(1).strip()}</p></div></div>'
+            qt = q.group(1).strip().replace('"',"'")
+            at = a.group(1).strip().replace('"',"'")
+            faq_schema_items.append(f'{{"@type":"Question","name":"{qt}","acceptedAnswer":{{"@type":"Answer","text":"{at}"}}}}')
+    faq_html += '</div>'
 
-# ── CALCULATEUR PAGE ───────────────────────────────────────────────
-calc_html = header(depth="") + f"""
-{head_tags("Convertisseur de farines sans gluten — Le Club Sans Gluten", "Convertissez facilement vos recettes en remplacant la farine de ble par des farines sans gluten.", depth="")}
-<div class="breadcrumb"><a href="/">Accueil</a><span>›</span><span>Convertisseur de farines</span></div>
-<div class="page-wrap">
-  <h1 class="page-title">Convertisseur de farines sans gluten</h1>
-  <p style="color:var(--gray);margin-bottom:2rem">Remplacez la farine de ble par des farines sans gluten dans n'importe quelle recette.</p>
+    related_links = ''
+    try:
+        existing = [f for f in os.listdir(cat) if f.endswith('.html') and f != 'index.html' and f != slug+'.html'][:3]
+        if existing:
+            items = []
+            for f in existing:
+                fhtml = open(os.path.join(cat, f)).read()
+                tm = re.search(r'<title>(.*?) — Le Club', fhtml)
+                art_t = tm.group(1) if tm else f.replace('.html','').replace('-',' ').capitalize()
+                items.append(f'<a href="/{cat}/{f}" class="related-link">→ {art_t}</a>')
+            related_links = '<div class="related-articles"><h3>À lire aussi</h3><div class="related-links">'+''.join(items)+'</div></div>'
+    except:
+        pass
 
-  <div class="calc-wrap">
-    <h2 class="calc-title">🔄 Je veux remplacer...</h2>
-    <div class="calc-row">
-      <div class="calc-field">
-        <label>Quantite (en grammes)</label>
-        <input type="number" id="qty" placeholder="ex: 200" min="1" max="2000"/>
-      </div>
-      <div class="calc-field">
-        <label>Farine de depart</label>
-        <select id="fromFlour">
-          <option value="ble">Farine de ble</option>
-          <option value="riz">Farine de riz</option>
-          <option value="sarrasin">Farine de sarrasin</option>
-        </select>
-      </div>
-      <div class="calc-field">
-        <label>Profil recette</label>
-        <select id="profile">
-          <option value="moelleux">Moelleux (gateaux)</option>
-          <option value="rustique">Rustique (pain)</option>
-          <option value="croustillant">Croustillant (tartes)</option>
-        </select>
-      </div>
-    </div>
-    <button class="calc-btn" onclick="calculate()">Calculer mon mix →</button>
-    <div class="calc-result" id="calcResult">
-      <h3>Ton mix recommande :</h3>
-      <div id="calcItems"></div>
-      <p style="font-size:.78rem;color:var(--gray);margin-top:.75rem">+ Ajoute 1 a 2 cuilleres a cafe de psyllium pour lier le tout.</p>
-    </div>
-  </div>
+    cta = '<div class="cta-box"><h3>🎁 Télécharge ton guide de survie GRATUIT</h3><p>Téléchargé par plus de 20 000 femmes intolérantes.</p><a class="cta-btn" href="https://www.whynottraining.fr/08c32d2c-1fbf916c-b0fd38be-d95c800f-ee160319-0993e605" target="_blank">Je veux mon guide gratuit →</a></div>' if cat == 'sante' else '<div class="cta-box"><h3>📚 La Bible des Farines Sans Gluten</h3><p>27 farines décryptées, 3 mix magiques, le convertisseur de recettes.</p><a class="cta-btn" href="https://www.whynottraining.fr/ed790464" target="_blank">Je veux La Bible des Farines →</a></div>'
+    disclaimer = '<div class="disclaimer"><strong>Information médicale :</strong> Cet article est à titre informatif uniquement. Consultez votre médecin.</div>' if cat == 'sante' else ''
 
-  <script>
-  var MIXES = {{
-    moelleux: [["Farine de riz",0.6],["Fecule de mais",0.25],["Farine d'amande",0.15]],
-    rustique: [["Farine de sarrasin",0.5],["Farine de riz",0.35],["Fecule de tapioca",0.15]],
-    croustillant: [["Farine de riz",0.55],["Fecule de mais",0.3],["Farine de coco",0.15]]
-  }};
-  function calculate(){{
-    var qty=parseFloat(document.getElementById('qty').value);
-    var profile=document.getElementById('profile').value;
-    if(!qty||qty<=0){{alert('Entre une quantite valide');return;}}
-    var mix=MIXES[profile];
-    var html=mix.map(function(m){{
-      return '<div class="calc-result-item"><span>'+m[0]+'</span><span>'+Math.round(qty*m[1])+'g</span></div>';
-    }}).join('');
-    document.getElementById('calcItems').innerHTML=html;
-    document.getElementById('calcResult').classList.add('show');
-  }}
-  </script>
+    schema     = f'{{"@context":"https://schema.org","@type":"BlogPosting","headline":"{titre}","description":"{meta}","image":"{img}","datePublished":"{TODAY_ISO}","dateModified":"{TODAY_ISO}","author":{{"@type":"Organization","name":"Le Club Sans Gluten"}},"publisher":{{"@type":"Organization","name":"Le Club Sans Gluten","url":"https://leclubsansgluten.com"}},"mainEntityOfPage":{{"@type":"WebPage","@id":"https://leclubsansgluten.com/{cat}/{slug}.html"}}}}'
+    breadcrumb = f'{{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{{"@type":"ListItem","position":1,"name":"Accueil","item":"https://leclubsansgluten.com/"}},{{"@type":"ListItem","position":2,"name":"{label}","item":"https://leclubsansgluten.com/{cat}/"}},{{"@type":"ListItem","position":3,"name":"{titre}","item":"https://leclubsansgluten.com/{cat}/{slug}.html"}}]}}'
+    faq_schema = f'{{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{",".join(faq_schema_items)}]}}' if faq_schema_items else ''
 
-  <div style="margin-top:2rem;padding:1.25rem;background:var(--gray-light);border-radius:var(--radius)">
-    <p style="font-size:.85rem;color:var(--gray);line-height:1.7"><strong>💡 Conseil :</strong> Ces ratios sont des points de depart. Chaque farine reagit differemment selon les recettes. N'hesite pas a ajuster la quantite de liquide selon la consistance obtenue. Pour aller plus loin, <a href="{SALE_URL}" target="_blank" style="color:var(--gold);font-weight:700">La Bible des Farines</a> contient tous les ratios de substitution testes.</p>
-  </div>
+    html = open('template.html').read()
+    for k, v in [('[TITRE_SEO]',titre),('[TITRE_ARTICLE]',titre),('[SLUG]',slug),
+                 ('[META_DESCRIPTION]',meta),('[CATEGORIE]',cat),('[CATEGORIE_LABEL]',label),
+                 ('[CATEGORIE_EMOJI]',emoji),('[DATE_PUBLICATION]',DATE_FR),('[TEMPS_LECTURE]',temps),
+                 ('[IMAGE_URL]',img),('[CTA_BOX]',cta),('[DISCLAIMER]',disclaimer),
+                 ('[FAQ_BLOCK]',faq_html),('[MAILLAGE_INTERNE]',related_links),('[CONTENU_ARTICLE]',contenu)]:
+        html = html.replace(k, v)
 
-  {cta_box("bible")}
-</div>
-{popup_html()}
-""" + footer(depth="")
+    schemas = f'<script type="application/ld+json">{schema}</script>\n<script type="application/ld+json">{breadcrumb}</script>'
+    if faq_schema:
+        schemas += f'\n<script type="application/ld+json">{faq_schema}</script>'
+    html = html.replace('<script type="application/ld+json">[SCHEMA_JSON]</script>', schemas)
 
-with open(f"{BASE}/calculateur.html", 'w', encoding='utf-8') as f:
-    f.write(calc_html)
+    os.makedirs(cat, exist_ok=True)
+    open(f'{cat}/{slug}.html', 'w').write(html)
+    print(f'  ✅ {cat}/{slug}.html — {titre}')
+    return slug
 
-print("Generated bonus pages (a-propos, glossaire, calculateur)")
+if __name__ == '__main__':
+    all_cats = ['recettes','sante','farines','guides']
+    total = total_articles()
+    cats_today = [all_cats[(total + i) % 4] for i in range(4)]
 
-# ── SITEMAP ────────────────────────────────────────────────────────
-from datetime import datetime
-today = datetime.now().strftime('%Y-%m-%d')
-urls = [DOMAIN+"/", DOMAIN+"/a-propos.html", DOMAIN+"/glossaire.html", DOMAIN+"/calculateur.html"]
-for cat in CAT_LABELS:
-    urls.append(f"{DOMAIN}/{cat}/")
-for a in ARTICLES:
-    urls.append(f"{DOMAIN}/{a['cat']}/{a['id']}.html")
+    print(f'📅 {DATE_FR} — Génération de 4 articles')
+    print(f'Catégories : {" / ".join(cats_today)}')
 
-sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-for url in urls:
-    sitemap += f"  <url><loc>{url}</loc><lastmod>{today}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>\n"
-sitemap += "</urlset>"
+    slugs = []
+    for i, cat in enumerate(cats_today):
+        print(f'\n--- Article {i+1}/4 : {cat} ---')
+        try:
+            slug = generate_article(cat, i)
+            slugs.append(f'{cat}/{slug}')
+            build_index(cat)
+        except Exception as e:
+            print(f'  Erreur article {i+1}: {e}')
 
-with open(f"{BASE}/sitemap.xml", 'w') as f:
-    f.write(sitemap)
+    build_sitemap()
 
-print(f"Sitemap: {len(urls)} URLs")
-print(f"\nDONE — {len(ARTICLES)} articles + a-propos + glossaire + calculateur")
+    with open('_slugs.txt', 'w') as f:
+        f.write('\n'.join(slugs))
+
+    print(f'\n✅ Terminé — {len(slugs)}/4 articles créés')
