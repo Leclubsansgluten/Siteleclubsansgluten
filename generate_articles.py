@@ -68,7 +68,9 @@ def build_index(cat):
     label = LABELS[cat]
     emoji = EMOJIS[cat]
     desc  = DESCS[cat]
-    files = sorted([f for f in os.listdir(cat) if f.endswith('.html') and f != 'index.html'], reverse=True)
+    files_with_date = [(os.path.getmtime(os.path.join(cat,f)), f) for f in os.listdir(cat) if f.endswith('.html') and f != 'index.html']
+    files_with_date.sort(reverse=True)
+    files = [f for _, f in files_with_date]
 
     cards = ''
     for f in files[:60]:
@@ -125,13 +127,27 @@ function applyFilters(){var q=document.getElementById("catSearch").value.toLower
   <div class="articles-grid">{cards}</div>
 </div>
 <script>document.getElementById("catSearch").addEventListener("input",function(){{var q=this.value.toLowerCase();if(typeof applyFilters!=="undefined"){{applyFilters();return;}}document.querySelectorAll(".card").forEach(function(c){{var t=c.querySelector(".card-title");if(t)c.style.display=t.textContent.toLowerCase().indexOf(q)>-1?"":"none";}});}});</script>
-<footer class="site-footer"><div class="footer-inner"><div class="footer-logo">Le Club <span>Sans Gluten</span></div><p class="footer-legal">© 2026 Le Club Sans Gluten · Tous droits réservés</p></div></footer>
+<footer class="site-footer"><div class="footer-inner"><div class="footer-logo">Le Club <span>Sans Gluten</span></div><p class="footer-legal">© 2026 Le Club Sans Gluten · Tous droits réservés</p>
+  <div style="margin-top:.5rem;font-size:.8rem;display:flex;gap:1.5rem;justify-content:center">
+    <a href="/mentions-legales.html" style="color:var(--gray);text-decoration:none">Mentions légales</a>
+    <a href="/cgv.html" style="color:var(--gray);text-decoration:none">CGV</a>
+  </div>
+</div></footer>
 </body></html>"""
 
     open(f'{cat}/index.html', 'w').write(idx)
     print(f'  ✅ Index {cat} — {len(files)} articles')
 
-def build_sitemap():
+def build_sitemap()
+
+    # Ping Google pour indexation rapide
+    import urllib.request
+    try:
+        ping_url = 'https://www.google.com/ping?sitemap=https://leclubsansgluten.com/sitemap.xml'
+        urllib.request.urlopen(ping_url, timeout=10)
+        print('  ✅ Google pingé — sitemap soumis pour indexation')
+    except Exception as e:
+        print(f'  ⚠️ Ping Google échoué (non critique): {e}'):
     freqs = {'recettes':'daily','sante':'weekly','farines':'weekly','guides':'weekly'}
     sm = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
     sm += f'  <url><loc>https://leclubsansgluten.com/</loc><lastmod>{TODAY_ISO}</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>\n'
@@ -262,6 +278,15 @@ if __name__ == '__main__':
             print(f'  ❌ Erreur article {i+1}: {e}')
 
     build_sitemap()
+
+    # Ping Google pour indexation rapide
+    import urllib.request
+    try:
+        ping_url = 'https://www.google.com/ping?sitemap=https://leclubsansgluten.com/sitemap.xml'
+        urllib.request.urlopen(ping_url, timeout=10)
+        print('  ✅ Google pingé — sitemap soumis pour indexation')
+    except Exception as e:
+        print(f'  ⚠️ Ping Google échoué (non critique): {e}')
 
     with open('_slugs.txt', 'w') as f:
         f.write('\n'.join(slugs))

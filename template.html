@@ -94,11 +94,15 @@
     <div class="footer-links">
       <a href="https://www.whynottraining.fr/08c32d2c-1fbf916c-b0fd38be-d95c800f-ee160319-0993e605" target="_blank">🎁 Guide gratuit</a>
       <a href="https://www.whynottraining.fr/ed790464" target="_blank">📚 La Bible des Farines</a>
-      <a href="/a-propos.html">A propos</a>
+      <a href="/a-propos.html">À propos</a>
       <a href="/glossaire.html">Glossaire</a>
       <a href="/calculateur.html">Convertisseur</a>
     </div>
-    <p class="footer-legal">© 2025 Le Club Sans Gluten · Tous droits reserves</p>
+    <div class="footer-links" style="margin-top:.5rem;font-size:.8rem">
+      <a href="/mentions-legales.html">Mentions légales</a>
+      <a href="/cgv.html">CGV</a>
+    </div>
+    <p class="footer-legal">© 2026 Le Club Sans Gluten · Tous droits réservés · whynot.training@outlook.fr</p>
   </div>
 </footer>
 <script>
@@ -143,6 +147,31 @@ if(inp&&res){
   });
   document.addEventListener('click',function(e){if(!inp.contains(e.target)&&!res.contains(e.target))res.style.display='none';});
   inp.addEventListener('keydown',function(e){if(e.key==='Enter'&&res.querySelector('a')){window.location=res.querySelector('a').href;}});
+}
+</script>
+
+<!-- Bandeau Cookies RGPD -->
+<div id="cookieBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#1a1a1a;color:#fff;padding:1rem 1.5rem;z-index:9999;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;font-family:var(--sans);font-size:.875rem">
+  <p style="margin:0;flex:1;min-width:200px">🍪 Ce site utilise des cookies pour mesurer l'audience et améliorer votre expérience. <a href="/mentions-legales.html" style="color:var(--gold);text-decoration:underline">En savoir plus</a></p>
+  <div style="display:flex;gap:.75rem;flex-shrink:0">
+    <button onclick="acceptCookies()" style="background:var(--gold);color:#1a1a1a;border:none;padding:.5rem 1.2rem;border-radius:6px;font-weight:700;cursor:pointer;font-size:.875rem">Accepter</button>
+    <button onclick="refuseCookies()" style="background:transparent;color:#fff;border:1px solid #555;padding:.5rem 1.2rem;border-radius:6px;cursor:pointer;font-size:.875rem">Refuser</button>
+  </div>
+</div>
+<script>
+(function(){
+  var consent = localStorage.getItem('cookie_consent');
+  if(!consent){
+    document.getElementById('cookieBanner').style.display='flex';
+  }
+})();
+function acceptCookies(){
+  localStorage.setItem('cookie_consent','accepted');
+  document.getElementById('cookieBanner').style.display='none';
+}
+function refuseCookies(){
+  localStorage.setItem('cookie_consent','refused');
+  document.getElementById('cookieBanner').style.display='none';
 }
 </script>
 </body>

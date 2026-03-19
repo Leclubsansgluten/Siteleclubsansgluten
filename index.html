@@ -294,19 +294,71 @@
   </div>
 </div>
 <script>setTimeout(function(){if(!localStorage.getItem('popup_shown')){document.getElementById('popup').classList.add('open');localStorage.setItem('popup_shown','1');}},8000);</script>
+<section class="home-section">
+  <div class="section-head">
+    <h2 class="section-title">🆕 Derniers articles</h2>
+  </div>
+  <div class="articles-grid">
+<a href="/guides/sans-gluten-ecole-enfants.html" class="card">
+  <div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&q=80" alt="Mon enfant intolérant au gluten à l'école : guide pratique" loading="lazy"/></div>
+  <div class="card-body">
+    <div class="card-cat">📖 Conseils</div>
+    <div class="card-title">Mon enfant intolérant au gluten à l'école : guide pratique</div>
+  </div>
+</a>
+<a href="/guides/voyage-sans-gluten-europe.html" class="card">
+  <div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80" alt="Voyage sans gluten en Europe : les 10 pays les plus accueillants" loading="lazy"/></div>
+  <div class="card-body">
+    <div class="card-cat">📖 Conseils</div>
+    <div class="card-title">Voyage sans gluten en Europe : les 10 pays les plus accueillants</div>
+  </div>
+</a>
+<a href="/guides/sans-gluten-restaurant.html" class="card">
+  <div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80" alt="Sans gluten au restaurant : comment commander sans se tromper" loading="lazy"/></div>
+  <div class="card-body">
+    <div class="card-cat">📖 Conseils</div>
+    <div class="card-title">Sans gluten au restaurant : comment commander sans se tromper</div>
+  </div>
+</a>
+<a href="/guides/debuter-sans-gluten-guide-complet.html" class="card">
+  <div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=600&q=80" alt="Débuter sans gluten : le guide complet 2025 pour les débutantes" loading="lazy"/></div>
+  <div class="card-body">
+    <div class="card-cat">📖 Conseils</div>
+    <div class="card-title">Débuter sans gluten : le guide complet 2025 pour les débutantes</div>
+  </div>
+</a>
+<a href="/guides/menu-semaine-sans-gluten-equilibre.html" class="card">
+  <div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&q=80" alt="Un menu équilibré sans gluten pour toute la semaine" loading="lazy"/></div>
+  <div class="card-body">
+    <div class="card-cat">📖 Conseils</div>
+    <div class="card-title">Un menu équilibré sans gluten pour toute la semaine</div>
+  </div>
+</a>
+<a href="/guides/cuisine-sans-gluten-budget.html" class="card">
+  <div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&q=80" alt="Manger sans gluten sans se ruiner : 10 astuces pour réduire sa facture" loading="lazy"/></div>
+  <div class="card-body">
+    <div class="card-cat">📖 Conseils</div>
+    <div class="card-title">Manger sans gluten sans se ruiner : 10 astuces pour réduire sa facture</div>
+  </div>
+</a>
+  </div>
+</section>
 <footer class="site-footer">
   <div class="footer-inner">
     <div class="footer-logo">Le Club <span>Sans Gluten</span></div>
-    <p class="footer-desc">Le site d'information sans gluten N°1 en France. Recettes testées, conseils santé, comparatifs de farines.</p>
+    <p class="footer-desc">Le site d'information sans gluten N°1 en France.</p>
     <div class="footer-links">
       <a href="https://www.whynottraining.fr/08c32d2c-1fbf916c-b0fd38be-d95c800f-ee160319-0993e605" target="_blank">🎁 Guide gratuit</a>
       <a href="https://www.whynottraining.fr/ed790464" target="_blank">📚 La Bible des Farines</a>
-      <a href="/a-propos.html">A propos</a>
+      <a href="/a-propos.html">À propos</a>
       <a href="/glossaire.html">Glossaire</a>
       <a href="/calculateur.html">Convertisseur</a>
     </div>
-    <p class="footer-legal">© 2026 Le Club Sans Gluten · Tous droits reserves</p>
-    <p class="footer-disclaimer">Les informations de ce site sont donnees a titre informatif et ne remplacent pas un avis medical professionnel.</p>
+    <div class="footer-links" style="margin-top:.5rem;font-size:.8rem">
+      <a href="/mentions-legales.html">Mentions légales</a>
+      <a href="/cgv.html">CGV</a>
+    </div>
+    <p class="footer-legal">© 2026 Le Club Sans Gluten · Tous droits réservés · whynot.training@outlook.fr</p>
   </div>
 </footer>
 <div class="sticky-cta" id="stickyCta">
@@ -336,6 +388,31 @@ if(inp&&SEARCH_DATA.length){
     res.style.display='block';
   });
   document.addEventListener('click',function(e){if(!inp.contains(e.target))res.style.display='none';});
+}
+</script>
+
+<!-- Bandeau Cookies RGPD -->
+<div id="cookieBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#1a1a1a;color:#fff;padding:1rem 1.5rem;z-index:9999;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;font-family:var(--sans);font-size:.875rem">
+  <p style="margin:0;flex:1;min-width:200px">🍪 Ce site utilise des cookies pour mesurer l'audience et améliorer votre expérience. <a href="/mentions-legales.html" style="color:var(--gold);text-decoration:underline">En savoir plus</a></p>
+  <div style="display:flex;gap:.75rem;flex-shrink:0">
+    <button onclick="acceptCookies()" style="background:var(--gold);color:#1a1a1a;border:none;padding:.5rem 1.2rem;border-radius:6px;font-weight:700;cursor:pointer;font-size:.875rem">Accepter</button>
+    <button onclick="refuseCookies()" style="background:transparent;color:#fff;border:1px solid #555;padding:.5rem 1.2rem;border-radius:6px;cursor:pointer;font-size:.875rem">Refuser</button>
+  </div>
+</div>
+<script>
+(function(){
+  var consent = localStorage.getItem('cookie_consent');
+  if(!consent){
+    document.getElementById('cookieBanner').style.display='flex';
+  }
+})();
+function acceptCookies(){
+  localStorage.setItem('cookie_consent','accepted');
+  document.getElementById('cookieBanner').style.display='none';
+}
+function refuseCookies(){
+  localStorage.setItem('cookie_consent','refused');
+  document.getElementById('cookieBanner').style.display='none';
 }
 </script>
 </body></html>
