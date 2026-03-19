@@ -1,6 +1,6 @@
 name: Fix Images — Une seule fois
 on:
-  workflow_dispatch:  # Lance manuellement une seule fois
+  workflow_dispatch:
 
 jobs:
   fix:
@@ -10,7 +10,9 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Corriger les images et mettre à jour les index
+      - name: Corriger les images via Pexels
+        env:
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         run: python3 fix_images.py
 
       - name: Commit et push
@@ -18,5 +20,5 @@ jobs:
           git config --global user.name 'Robot SEO — Le Club Sans Gluten'
           git config --global user.email 'bot@leclubsansgluten.com'
           git add .
-          git commit -m "🖼️ Fix images — articles corrigés" || echo "Rien à commiter"
+          git commit -m "🖼️ Fix images Pexels — $(date +%Y-%m-%d)" || echo "Rien à commiter"
           git push
