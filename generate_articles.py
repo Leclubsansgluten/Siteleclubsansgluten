@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""
-Script de génération d'articles — appelé par le workflow GitHub Actions.
-Génère 4 articles (1 par catégorie) en une seule exécution.
-"""
-import os, re, json, subprocess
+import os, re, json, subprocess, urllib.request
 from datetime import datetime
 
 API_KEY   = os.environ.get('ANTHROPIC_API_KEY', '')
@@ -22,16 +18,16 @@ DESCS  = {
     'guides':   'Guides pratiques pour bien vivre sans gluten : débuter, voyager, cuisiner avec un petit budget.'
 }
 IMAGES = [
-    'https://images.unsplash.com/photo-1587241321921-91a834d6d191?w=1200&q=80',  # gâteau
-    'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=1200&q=80',  # pain
-    'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=1200&q=80',  # légumes
-    'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1200&q=80',     # cuisine
-    'https://images.unsplash.com/photo-1612200606649-1e95b16fcf2c?w=1200&q=80',  # farines
-    'https://images.unsplash.com/photo-1547592180-85f173990554?w=1200&q=80',     # femme
-    'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=1200&q=80',  # salade
-    'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=1200&q=80',     # soupe
-    'https://images.unsplash.com/photo-1519676867240-f03562e64548?w=1200&q=80',  # crêpes
-    'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=1200&q=80',  # chocolat
+    'https://images.unsplash.com/photo-1587241321921-91a834d6d191?w=1200&q=80',
+    'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=1200&q=80',
+    'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=1200&q=80',
+    'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1200&q=80',
+    'https://images.unsplash.com/photo-1612200606649-1e95b16fcf2c?w=1200&q=80',
+    'https://images.unsplash.com/photo-1547592180-85f173990554?w=1200&q=80',
+    'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=1200&q=80',
+    'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=1200&q=80',
+    'https://images.unsplash.com/photo-1519676867240-f03562e64548?w=1200&q=80',
+    'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=1200&q=80',
 ]
 
 def total_articles():
@@ -39,7 +35,8 @@ def total_articles():
     for root, dirs, files in os.walk('.'):
         for f in files:
             if f.endswith('.html') and f not in ['index.html','template.html',
-               'a-propos.html','glossaire.html','calculateur.html']:
+               'a-propos.html','glossaire.html','calculateur.html',
+               'mentions-legales.html','cgv.html']:
                 count += 1
     return count
 
@@ -68,7 +65,10 @@ def build_index(cat):
     label = LABELS[cat]
     emoji = EMOJIS[cat]
     desc  = DESCS[cat]
-    files_with_date = [(os.path.getmtime(os.path.join(cat,f)), f) for f in os.listdir(cat) if f.endswith('.html') and f != 'index.html']
+
+    files_with_date = [(os.path.getmtime(os.path.join(cat,f)), f)
+                       for f in os.listdir(cat)
+                       if f.endswith('.html') and f != 'index.html']
     files_with_date.sort(reverse=True)
     files = [f for _, f in files_with_date]
 
@@ -78,7 +78,8 @@ def build_index(cat):
         tm = re.search(r'<title>(.*?) — Le Club', fhtml)
         ft = tm.group(1) if tm else f.replace('-',' ').replace('.html','').capitalize()
         im = re.search(r'<img class="article-hero"[^>]+src="([^"]+)"', fhtml)
-        if not im: im = re.search(r'"image":"([^"]+)"', fhtml)
+        if not im:
+            im = re.search(r'"image":"([^"]+)"', fhtml)
         fimg = re.sub(r'w=\d+', 'w=600', im.group(1)) if im else IMAGES[3]
         cards += f'<a href="/{cat}/{f}" class="card"><div class="card-img-wrap"><img class="card-img" src="{fimg}" alt="{ft}" loading="lazy"/></div><div class="card-body"><div class="card-cat">{emoji} {label}</div><div class="card-title">{ft}</div></div></a>\n'
 
@@ -127,27 +128,26 @@ function applyFilters(){var q=document.getElementById("catSearch").value.toLower
   <div class="articles-grid">{cards}</div>
 </div>
 <script>document.getElementById("catSearch").addEventListener("input",function(){{var q=this.value.toLowerCase();if(typeof applyFilters!=="undefined"){{applyFilters();return;}}document.querySelectorAll(".card").forEach(function(c){{var t=c.querySelector(".card-title");if(t)c.style.display=t.textContent.toLowerCase().indexOf(q)>-1?"":"none";}});}});</script>
-<footer class="site-footer"><div class="footer-inner"><div class="footer-logo">Le Club <span>Sans Gluten</span></div><p class="footer-legal">© 2026 Le Club Sans Gluten · Tous droits réservés</p>
-  <div style="margin-top:.5rem;font-size:.8rem;display:flex;gap:1.5rem;justify-content:center">
-    <a href="/mentions-legales.html" style="color:var(--gray);text-decoration:none">Mentions légales</a>
-    <a href="/cgv.html" style="color:var(--gray);text-decoration:none">CGV</a>
+<footer class="site-footer"><div class="footer-inner">
+  <div class="footer-logo">Le Club <span>Sans Gluten</span></div>
+  <div class="footer-links">
+    <a href="https://www.whynottraining.fr/08c32d2c-1fbf916c-b0fd38be-d95c800f-ee160319-0993e605" target="_blank">🎁 Guide gratuit</a>
+    <a href="https://www.whynottraining.fr/ed790464" target="_blank">📚 La Bible des Farines</a>
+    <a href="/a-propos.html">À propos</a>
+    <a href="/glossaire.html">Glossaire</a>
   </div>
+  <div class="footer-links" style="margin-top:.5rem;font-size:.8rem">
+    <a href="/mentions-legales.html">Mentions légales</a>
+    <a href="/cgv.html">CGV</a>
+  </div>
+  <p class="footer-legal">© 2026 Le Club Sans Gluten · Tous droits réservés</p>
 </div></footer>
 </body></html>"""
 
     open(f'{cat}/index.html', 'w').write(idx)
     print(f'  ✅ Index {cat} — {len(files)} articles')
 
-def build_sitemap()
-
-    # Ping Google pour indexation rapide
-    import urllib.request
-    try:
-        ping_url = 'https://www.google.com/ping?sitemap=https://leclubsansgluten.com/sitemap.xml'
-        urllib.request.urlopen(ping_url, timeout=10)
-        print('  ✅ Google pingé — sitemap soumis pour indexation')
-    except Exception as e:
-        print(f'  ⚠️ Ping Google échoué (non critique): {e}'):
+def build_sitemap():
     freqs = {'recettes':'daily','sante':'weekly','farines':'weekly','guides':'weekly'}
     sm = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
     sm += f'  <url><loc>https://leclubsansgluten.com/</loc><lastmod>{TODAY_ISO}</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>\n'
@@ -159,6 +159,13 @@ def build_sitemap()
     open('sitemap.xml', 'w').write(sm)
     print(f'  ✅ Sitemap — {sm.count("<url>")} URLs')
 
+    # Ping Google
+    try:
+        urllib.request.urlopen('https://www.google.com/ping?sitemap=https://leclubsansgluten.com/sitemap.xml', timeout=10)
+        print('  ✅ Google pingé')
+    except Exception as e:
+        print(f'  ⚠️ Ping Google: {e}')
+
 def generate_article(cat, index_num):
     label = LABELS[cat]
     emoji = EMOJIS[cat]
@@ -168,7 +175,7 @@ def generate_article(cat, index_num):
 
 CATÉGORIE : {cat}
 
-Choisis un sujet précis longue traîne pour la catégorie {cat}, ciblant les femmes françaises 30-55 ans intolérantes au gluten. Sujet non redondant avec les articles déjà existants.
+Choisis un sujet précis longue traîne pour {cat}, ciblant les femmes françaises 30-55 ans intolérantes au gluten. Sujet non redondant.
 
 Rédige un article complet 3500 mots minimum avec :
 - Introduction répondant immédiatement à l'intention de recherche
@@ -177,17 +184,17 @@ Rédige un article complet 3500 mots minimum avec :
 - 2+ listes ou tableaux avec données chiffrées
 - FAQ 4 questions réelles Google
 
-Choisis l'image Unsplash la plus pertinente parmi :
+Choisis l'image Unsplash la plus pertinente :
 {images_list}
 
-RÉPONDS UNIQUEMENT dans ce format :
+FORMAT EXACT :
 [TITRE]titre 60 car max avec accents[/TITRE]
 [SLUG]slug-sans-accents[/SLUG]
 [META]meta description 155 car max[/META]
 [TEMPS]X min[/TEMPS]
 [IMAGE]URL complète choisie[/IMAGE]
 [FAQ_Q1]Question 1[/FAQ_Q1]
-[FAQ_A1]Réponse 1 (2-3 phrases)[/FAQ_A1]
+[FAQ_A1]Réponse 1[/FAQ_A1]
 [FAQ_Q2]Question 2[/FAQ_Q2]
 [FAQ_A2]Réponse 2[/FAQ_A2]
 [FAQ_Q3]Question 3[/FAQ_Q3]
@@ -196,7 +203,7 @@ RÉPONDS UNIQUEMENT dans ce format :
 [FAQ_A4]Réponse 4[/FAQ_A4]
 [CONTENU]HTML complet (p, h2, h3, ul, li, strong, em uniquement)[/CONTENU]"""
 
-    print(f'  Appel API Claude pour {cat}...')
+    print(f'  Appel API pour {cat}...')
     t = call_api(prompt)
 
     titre   = extract('TITRE', t) or 'Article sans gluten'
@@ -207,7 +214,6 @@ RÉPONDS UNIQUEMENT dans ce format :
     img_raw = extract('IMAGE', t)
     img     = img_raw if img_raw.startswith('http') else IMAGES[3]
 
-    # FAQ HTML
     faq_html = '<div class="faq-block"><h2>Questions fréquentes</h2>'
     faq_schema_items = []
     for j in range(1, 5):
@@ -215,12 +221,11 @@ RÉPONDS UNIQUEMENT dans ce format :
         a = re.search(r'\[FAQ_A'+str(j)+r'\](.*?)\[/FAQ_A'+str(j)+r'\]', t, re.DOTALL)
         if q and a:
             faq_html += f'<div class="faq-item"><button class="faq-q" onclick="this.parentElement.classList.toggle(\'open\')">{q.group(1).strip()}<span class="faq-icon">+</span></button><div class="faq-a"><p>{a.group(1).strip()}</p></div></div>'
-            qt = q.group(1).strip().replace('"', "'")
-            at = a.group(1).strip().replace('"', "'")
+            qt = q.group(1).strip().replace('"',"'")
+            at = a.group(1).strip().replace('"',"'")
             faq_schema_items.append(f'{{"@type":"Question","name":"{qt}","acceptedAnswer":{{"@type":"Answer","text":"{at}"}}}}')
     faq_html += '</div>'
 
-    # Maillage interne
     related_links = ''
     try:
         existing = [f for f in os.listdir(cat) if f.endswith('.html') and f != 'index.html' and f != slug+'.html'][:3]
@@ -232,7 +237,8 @@ RÉPONDS UNIQUEMENT dans ce format :
                 art_t = tm.group(1) if tm else f.replace('.html','').replace('-',' ').capitalize()
                 items.append(f'<a href="/{cat}/{f}" class="related-link">→ {art_t}</a>')
             related_links = '<div class="related-articles"><h3>À lire aussi</h3><div class="related-links">'+''.join(items)+'</div></div>'
-    except: pass
+    except:
+        pass
 
     cta = '<div class="cta-box"><h3>🎁 Télécharge ton guide de survie GRATUIT</h3><p>Téléchargé par plus de 20 000 femmes intolérantes.</p><a class="cta-btn" href="https://www.whynottraining.fr/08c32d2c-1fbf916c-b0fd38be-d95c800f-ee160319-0993e605" target="_blank">Je veux mon guide gratuit →</a></div>' if cat == 'sante' else '<div class="cta-box"><h3>📚 La Bible des Farines Sans Gluten</h3><p>27 farines décryptées, 3 mix magiques, le convertisseur de recettes.</p><a class="cta-btn" href="https://www.whynottraining.fr/ed790464" target="_blank">Je veux La Bible des Farines →</a></div>'
     disclaimer = '<div class="disclaimer"><strong>Information médicale :</strong> Cet article est à titre informatif uniquement. Consultez votre médecin.</div>' if cat == 'sante' else ''
@@ -250,7 +256,8 @@ RÉPONDS UNIQUEMENT dans ce format :
         html = html.replace(k, v)
 
     schemas = f'<script type="application/ld+json">{schema}</script>\n<script type="application/ld+json">{breadcrumb}</script>'
-    if faq_schema: schemas += f'\n<script type="application/ld+json">{faq_schema}</script>'
+    if faq_schema:
+        schemas += f'\n<script type="application/ld+json">{faq_schema}</script>'
     html = html.replace('<script type="application/ld+json">[SCHEMA_JSON]</script>', schemas)
 
     os.makedirs(cat, exist_ok=True)
@@ -258,7 +265,6 @@ RÉPONDS UNIQUEMENT dans ce format :
     print(f'  ✅ {cat}/{slug}.html — {titre}')
     return slug
 
-# ── MAIN ──────────────────────────────────────────────────────────────
 if __name__ == '__main__':
     all_cats = ['recettes','sante','farines','guides']
     total = total_articles()
@@ -275,18 +281,9 @@ if __name__ == '__main__':
             slugs.append(f'{cat}/{slug}')
             build_index(cat)
         except Exception as e:
-            print(f'  ❌ Erreur article {i+1}: {e}')
+            print(f'  Erreur article {i+1}: {e}')
 
     build_sitemap()
-
-    # Ping Google pour indexation rapide
-    import urllib.request
-    try:
-        ping_url = 'https://www.google.com/ping?sitemap=https://leclubsansgluten.com/sitemap.xml'
-        urllib.request.urlopen(ping_url, timeout=10)
-        print('  ✅ Google pingé — sitemap soumis pour indexation')
-    except Exception as e:
-        print(f'  ⚠️ Ping Google échoué (non critique): {e}')
 
     with open('_slugs.txt', 'w') as f:
         f.write('\n'.join(slugs))
