@@ -324,3 +324,29 @@ button{cursor:pointer;font-family:inherit}
 .related-link:hover {
   color: var(--gold);
 }
+
+
+/* Sections homepage */
+.home-section {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+.home-section .section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 3rem 0 1.25rem;
+  padding-bottom: .75rem;
+  border-bottom: 2px solid var(--border);
+}
+.home-section:last-of-type {
+  margin-bottom: 3rem;
+}
+.avis-overflow {
+  overflow: hidden;
+  width: 100%;
+}
+@media (max-width: 768px) {
+  .home-section { padding: 0 1rem; }
+}
