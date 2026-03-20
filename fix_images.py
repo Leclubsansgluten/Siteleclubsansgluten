@@ -71,3 +71,52 @@ for cat in ['recettes', 'sante', 'farines', 'guides']:
  
 print(f'\n✅ {count} articles mis à jour avec images Pexels')
  
+# Régénérer les index de toutes les catégories
+print('\nRégénération des index...')
+LABELS = {'recettes':'Recettes','sante':'Santé','farines':'Farines','guides':'Conseils'}
+EMOJIS = {'recettes':'🍞','sante':'🌿','farines':'⚖️','guides':'📖'}
+DESCS  = {
+    'recettes': 'Recettes sans gluten testées et approuvées par notre communauté de 100 000 membres.',
+    'sante':    'Symptômes, diagnostics, conseils santé pour vivre mieux sans gluten. Articles vérifiés.',
+    'farines':  "Comparatifs complets des farines sans gluten. Guides d'utilisation pratiques.",
+    'guides':   'Guides pratiques pour bien vivre sans gluten : débuter, voyager, cuisiner avec un petit budget.'
+}
+ 
+for cat in ['recettes', 'sante', 'farines', 'guides']:
+    if not os.path.exists(cat):
+        continue
+    label = LABELS[cat]
+    emoji = EMOJIS[cat]
+    desc  = DESCS[cat]
+ 
+    files_with_date = [(os.path.getmtime(os.path.join(cat,f)), f)
+                       for f in os.listdir(cat)
+                       if f.endswith('.html') and f != 'index.html']
+    files_with_date.sort(reverse=True)
+    files = [f for _, f in files_with_date]
+ 
+    cards = ''
+    for f in files[:60]:
+        fhtml = open(os.path.join(cat, f)).read()
+        tm = re.search(r'<title>(.*?) — Le Club', fhtml)
+        ft = tm.group(1) if tm else f.replace('-',' ').replace('.html','').capitalize()
+        im = re.search(r'<img class="article-hero"[^>]+src="([^"]+)"', fhtml)
+        if not im:
+            im = re.search(r'"image":"([^"]+)"', fhtml)
+        fimg = im.group(1) if im else ''
+        cards += f'<a href="/{cat}/{f}" class="card"><div class="card-img-wrap"><img class="card-img" src="{fimg}" alt="{ft}" loading="lazy"/></div><div class="card-body"><div class="card-cat">{emoji} {label}</div><div class="card-title">{ft}</div></div></a>\n'
+ 
+    # Lire l'index existant et remplacer juste la grille d'articles
+    idx_path = os.path.join(cat, 'index.html')
+    if os.path.exists(idx_path):
+        idx_html = open(idx_path).read()
+        idx_html = re.sub(
+            r'<div class="articles-grid">.*?</div>\s*</div>\s*<script>',
+            f'<div class="articles-grid">{cards}</div>\n</div>\n<script>',
+            idx_html, flags=re.DOTALL, count=1
+        )
+        # Mettre à jour le compte d'articles
+        idx_html = re.sub(r'\d+ articles', f'{len(files)} articles', idx_html, count=1)
+        open(idx_path, 'w').write(idx_html)
+        print(f'✅ Index {cat} régénéré — {len(files)} articles')
+ 
