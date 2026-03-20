@@ -15,6 +15,17 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="/assets/style.css"/>
+<style>
+.header-search-wrap{position:relative}
+.search-results{display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.15);z-index:1000;overflow:hidden;max-height:380px;overflow-y:auto}
+.search-result-item{display:flex;align-items:center;gap:.75rem;padding:.65rem 1rem;text-decoration:none;color:var(--ink);transition:background .15s;border-bottom:1px solid var(--border)}
+.search-result-item:last-child{border-bottom:none}
+.search-result-item:hover{background:var(--cream)}
+.search-result-img{width:48px;height:48px;object-fit:cover;border-radius:6px;flex-shrink:0}
+.search-result-body{display:flex;flex-direction:column;gap:.2rem;min-width:0}
+.search-result-cat{font-size:.7rem;color:var(--gold);font-weight:700;font-family:var(--sans);text-transform:uppercase}
+.search-result-title{font-size:.85rem;font-weight:600;color:var(--ink);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+</style>
 </head>
 <body>
 
@@ -229,5 +240,57 @@ function acceptCookies(){localStorage.setItem('cookie_consent','accepted');docum
 function refuseCookies(){localStorage.setItem('cookie_consent','refused');document.getElementById('cookieBanner').style.display='none';}
 </script>
 
+
+<script src="/assets/search-index.js"></script>
+<script>
+(function(){
+  var input = document.getElementById('headerSearch');
+  var results = document.getElementById('searchResults');
+  if(!input || !results) return;
+
+  function normalize(s){
+    return s.toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g,'')
+      .replace(/[^a-z0-9 ]/g,' ');
+  }
+
+  input.addEventListener('input', function(){
+    var q = normalize(this.value.trim());
+    if(q.length < 2){ results.innerHTML=''; results.style.display='none'; return; }
+    
+    var words = q.split(' ').filter(Boolean);
+    var matches = SEARCH_INDEX.filter(function(a){
+      var t = normalize(a.title);
+      return words.every(function(w){ return t.indexOf(w) > -1; });
+    }).slice(0, 6);
+
+    if(matches.length === 0){ results.innerHTML=''; results.style.display='none'; return; }
+
+    results.innerHTML = matches.map(function(a){
+      return '<a href="'+a.url+'" class="search-result-item">'+
+        '<img src="'+a.img+'" alt="" class="search-result-img" onerror="this.style.display='none'"/>'+
+        '<div class="search-result-body">'+
+          '<span class="search-result-cat">'+a.emoji+' '+a.cat+'</span>'+
+          '<span class="search-result-title">'+a.title+'</span>'+
+        '</div>'+
+      '</a>';
+    }).join('');
+    results.style.display = 'block';
+  });
+
+  input.addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){
+      var q = this.value.trim();
+      if(q) window.location.href = '/recettes/?q=' + encodeURIComponent(q);
+    }
+  });
+
+  document.addEventListener('click', function(e){
+    if(!input.contains(e.target) && !results.contains(e.target)){
+      results.style.display='none';
+    }
+  });
+})();
+</script>
 </body>
 </html>
