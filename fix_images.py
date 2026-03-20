@@ -17,8 +17,12 @@ def get_pexels_image(titre, cat):
     try:
         query = ' '.join(titre.replace(':', '').replace('—', '').split()[:5])
         url = f'https://api.pexels.com/v1/search?query={urllib.parse.quote(query)}&per_page=1&orientation=landscape'
-        req = urllib.request.Request(url, headers={'Authorization': PEXELS_KEY})
-        data = json.loads(urllib.request.urlopen(req, timeout=10).read())
+        req = urllib.request.Request(url, headers={
+            'Authorization': PEXELS_KEY,
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+            'Accept': 'application/json',
+        })
+        data = json.loads(urllib.request.urlopen(req, timeout=15).read())
         if data.get('photos'):
             return data['photos'][0]['src']['large2x']
     except Exception as e:
