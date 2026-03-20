@@ -41,7 +41,7 @@ button{cursor:pointer;font-family:inherit}
 .site-nav{background:var(--ink)}
 .site-nav-inner{max-width:1200px;margin:0 auto;padding:0 1.5rem;display:flex;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;justify-content:center}
 .site-nav-inner::-webkit-scrollbar{display:none}
-.site-nav a{color:rgba(255,255,255,.65);font-size:1.25rem;font-weight:600;letter-spacing:.03em;text-transform:uppercase;padding:.9rem 1.5rem;display:block;white-space:nowrap;transition:color .2s;border-bottom:2px solid transparent}
+.site-nav a{color:rgba(255,255,255,.65);font-size:.9375rem;font-weight:600;letter-spacing:.03em;text-transform:uppercase;padding:.9rem 1.5rem;display:block;white-space:nowrap;transition:color .2s;border-bottom:2px solid transparent}
 .site-nav a:hover,.site-nav a.active{color:var(--white);border-bottom-color:var(--gold)}
 
 .reassurance{background:var(--white);border-bottom:1px solid var(--border);overflow:hidden;white-space:nowrap;padding:.5rem 0}
@@ -59,7 +59,7 @@ button{cursor:pointer;font-family:inherit}
 .welcome-eyebrow{display:inline-flex;align-items:center;gap:.4rem;font-size:.7rem;color:var(--gold-dark);font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:1rem;background:rgba(201,168,76,.12);padding:.3rem .75rem;border-radius:99px;border:1px solid rgba(201,168,76,.3)}
 .welcome-title{font-family:'Georgia',serif;font-weight:700;font-size:2.8rem;color:var(--ink);line-height:1.1;margin-bottom:1rem;letter-spacing:-.02em}
 .welcome-sub{font-size:.95rem;color:var(--gray);line-height:1.8;margin-bottom:2rem;max-width:560px}
-.welcome-img-cards{display:grid;grid-template-columns:1fr 1fr;gap:1rem;max-width:620px}
+.welcome-img-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;max-width:920px}
 .welcome-img-card{display:block;border-radius:var(--radius-lg);overflow:hidden;border:2px solid var(--border);transition:transform .25s,box-shadow .25s,border-color .25s;box-shadow:var(--shadow-sm)}
 .welcome-img-card:hover{border-color:var(--gold);transform:translateY(-4px);box-shadow:var(--shadow-lg)}
 .welcome-img-card img{width:100%;aspect-ratio:16/9;object-fit:cover}
@@ -157,7 +157,7 @@ button{cursor:pointer;font-family:inherit}
   .site-header{padding:.6rem 1rem}
   .logo{font-size:1.35rem}
   .header-search{display:none}
-  .site-nav a{font-size:.875rem;padding:.7rem .9rem}
+  .site-nav a{font-size:.75rem;padding:.7rem .75rem}
   .welcome-hero{padding:2rem 1rem}
   .welcome-title{font-size:1.75rem}
   .welcome-sub{font-size:.88rem}
@@ -184,7 +184,7 @@ button{cursor:pointer;font-family:inherit}
 @media(max-width:380px){
   .logo{font-size:1.2rem}
   .welcome-title{font-size:1.5rem}
-  .site-nav a{font-size:.875rem;padding:.65rem .7rem}
+  .site-nav a{font-size:.75rem;padding:.65rem .6rem}
 }
 
 /* ── SEARCH ── */
