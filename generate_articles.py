@@ -26,23 +26,27 @@ IMAGES_FALLBACK = {
     'guides':   'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=1200&q=80',
 }
 
+# Compteur pour varier les images
+_img_counter = 0
+
 def get_pexels_image(titre, cat):
-    """Cherche une photo Pexels en lien avec le titre de l'article."""
+    """Cherche une photo Pexels unique en lien avec le titre de l'article."""
+    global _img_counter
+    _img_counter += 1
     import urllib.request, urllib.parse, json as json2
     try:
-        # Nettoyer le titre pour la recherche
-        query = titre.replace(':', '').replace('—', '').strip()
-        # Limiter à 5 mots pour une meilleure pertinence
-        query = ' '.join(query.split()[:5])
-        url = f'https://api.pexels.com/v1/search?query={urllib.parse.quote(query)}&per_page=1&orientation=landscape'
+        query = ' '.join(titre.replace(':', '').replace('—', '').strip().split()[:5])
+        page = (_img_counter % 5) + 1
+        url = f'https://api.pexels.com/v1/search?query={urllib.parse.quote(query)}&per_page=5&page={page}&orientation=landscape'
         req = urllib.request.Request(url, headers={
             'Authorization': PEXELS_KEY,
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
             'Accept': 'application/json',
         })
-        data = json2.loads(urllib.request.urlopen(req, timeout=10).read())
+        data = json2.loads(urllib.request.urlopen(req, timeout=15).read())
         if data.get('photos'):
-            img_url = data['photos'][0]['src']['large2x']
+            idx = (_img_counter - 1) % len(data['photos'])
+            img_url = data['photos'][idx]['src']['large2x']
             print(f'  📸 Pexels: {img_url[:60]}...')
             return img_url
     except Exception as e:
