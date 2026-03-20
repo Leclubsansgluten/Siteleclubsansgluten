@@ -1,10 +1,7 @@
-
-Copier
-
 #!/usr/bin/env python3
 import os, re, json, subprocess, urllib.request
 from datetime import datetime
- 
+
 API_KEY      = os.environ.get('ANTHROPIC_API_KEY', '')
 PEXELS_KEY   = os.environ.get('PEXELS_API_KEY', '')
 TODAY_ISO = datetime.now().strftime('%Y-%m-%d')
@@ -12,7 +9,7 @@ MONTHS    = ['janvier','février','mars','avril','mai','juin','juillet','août',
              'septembre','octobre','novembre','décembre']
 d         = datetime.now()
 DATE_FR   = f"{d.day} {MONTHS[d.month-1]} {d.year}"
- 
+
 LABELS = {'recettes':'Recettes','sante':'Santé','farines':'Farines','guides':'Conseils'}
 EMOJIS = {'recettes':'🍞','sante':'🌿','farines':'⚖️','guides':'📖'}
 DESCS  = {
@@ -28,10 +25,10 @@ IMAGES_FALLBACK = {
     'farines':  'https://images.unsplash.com/photo-1612200606649-1e95b16fcf2c?w=1200&q=80',
     'guides':   'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=1200&q=80',
 }
- 
+
 # Compteur pour varier les images
 _img_counter = 0
- 
+
 def get_pexels_image(titre, cat):
     """Cherche une photo Pexels unique en lien avec le titre de l'article."""
     global _img_counter
@@ -55,7 +52,7 @@ def get_pexels_image(titre, cat):
     except Exception as e:
         print(f'  ⚠️ Pexels échoué: {e}')
     return IMAGES_FALLBACK.get(cat, IMAGES_FALLBACK['recettes'])
- 
+
 def total_articles():
     count = 0
     for root, dirs, files in os.walk('.'):
@@ -65,11 +62,11 @@ def total_articles():
                'mentions-legales.html','cgv.html']:
                 count += 1
     return count
- 
+
 def extract(tag, text):
     m = re.search(r'\['+tag+r'\](.*?)\[/'+tag+r'\]', text, re.DOTALL)
     return m.group(1).strip() if m else ''
- 
+
 def call_api(prompt):
     payload = json.dumps({
         "model": "claude-sonnet-4-20250514",
@@ -86,18 +83,18 @@ def call_api(prompt):
     )
     data = json.loads(result.stdout)
     return data['content'][0]['text']
- 
+
 def build_index(cat):
     label = LABELS[cat]
     emoji = EMOJIS[cat]
     desc  = DESCS[cat]
- 
+
     files_with_date = [(os.path.getmtime(os.path.join(cat,f)), f)
                        for f in os.listdir(cat)
                        if f.endswith('.html') and f != 'index.html']
     files_with_date.sort(reverse=True)
     files = [f for _, f in files_with_date]
- 
+
     cards = ''
     for f in files[:60]:
         fhtml = open(os.path.join(cat, f)).read()
@@ -108,7 +105,7 @@ def build_index(cat):
             im = re.search(r'"image":"([^"]+)"', fhtml)
         fimg = re.sub(r'w=\d+', 'w=600', im.group(1)) if im else IMAGES[3]
         cards += f'<a href="/{cat}/{f}" class="card"><div class="card-img-wrap"><img class="card-img" src="{fimg}" alt="{ft}" loading="lazy"/></div><div class="card-body"><div class="card-cat">{emoji} {label}</div><div class="card-title">{ft}</div></div></a>\n'
- 
+
     subcats = ''
     if cat == 'recettes':
         subcats = '''<div class="subcats">
@@ -125,9 +122,9 @@ function filterCat(c,b){currentCat=c;document.querySelectorAll(".subcat").forEac
 function detectCat(c){var cat=c.getAttribute("data-cat");if(cat)return cat;var href=c.getAttribute("href")||"";var slug=href.split("/").pop().replace(".html","").toLowerCase();var title=(c.querySelector(".card-title")||{}).textContent||"";var text=slug+" "+title.toLowerCase();if(/pain|baguette|mie|brioche|chataigne/.test(text))return"pain";if(/crepe|galette|pancake|sarrasin/.test(text))return"crepes";if(/gateau|cake|brownie|cookie|muffin|tarte|citron|tatin|dessert/.test(text))return"gateaux";if(/soupe|veloute|minestrone|bouillon/.test(text))return"soupes";if(/lasagne|quiche|pizza|plat|gratin/.test(text))return"plats";return"toutes";}
 function applyFilters(){var q=document.getElementById("catSearch").value.toLowerCase();document.querySelectorAll(".card").forEach(function(c){var t=c.querySelector(".card-title");var cc=detectCat(c);c.style.display=((currentCat==="toutes"||cc===currentCat)&&(!q||(t&&t.textContent.toLowerCase().indexOf(q)>-1)))?"":"none";});}
 </script>'''
- 
+
     bc = f'{{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{{"@type":"ListItem","position":1,"name":"Accueil","item":"https://leclubsansgluten.com/"}},{{"@type":"ListItem","position":2,"name":"{label}","item":"https://leclubsansgluten.com/{cat}/"}}]}}'
- 
+
     idx = f"""<!DOCTYPE html>
 <html lang="fr"><head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -169,10 +166,10 @@ function applyFilters(){var q=document.getElementById("catSearch").value.toLower
   <p class="footer-legal">© 2026 Le Club Sans Gluten · Tous droits réservés</p>
 </div></footer>
 </body></html>"""
- 
+
     open(f'{cat}/index.html', 'w').write(idx)
     print(f'  ✅ Index {cat} — {len(files)} articles')
- 
+
 def build_sitemap():
     freqs = {'recettes':'daily','sante':'weekly','farines':'weekly','guides':'weekly'}
     sm = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
@@ -184,30 +181,30 @@ def build_sitemap():
     sm += '</urlset>'
     open('sitemap.xml', 'w').write(sm)
     print(f'  ✅ Sitemap — {sm.count("<url>")} URLs')
- 
+
     # Ping Google
     try:
         urllib.request.urlopen('https://www.google.com/ping?sitemap=https://leclubsansgluten.com/sitemap.xml', timeout=10)
         print('  ✅ Google pingé')
     except Exception as e:
         print(f'  ⚠️ Ping Google: {e}')
- 
+
 def generate_article(cat, index_num):
     label = LABELS[cat]
     emoji = EMOJIS[cat]
     prompt = f"""Tu es un expert SEO et rédacteur spécialisé dans l'alimentation sans gluten pour leclubsansgluten.com.
- 
+
 CATÉGORIE : {cat}
- 
+
 Choisis un sujet précis longue traîne pour {cat}, ciblant les femmes françaises 30-55 ans intolérantes au gluten. Sujet non redondant.
- 
+
 Rédige un article complet 3500 mots minimum avec :
 - Introduction répondant immédiatement à l'intention de recherche
 - 6+ H2 avec mots-clés intégrés naturellement
 - Paragraphes courts (150-200 mots), ton chaleureux d'experte
 - 2+ listes ou tableaux avec données chiffrées
 - FAQ 4 questions réelles Google
- 
+
 FORMAT EXACT :
 [TITRE]titre 60 car max avec accents[/TITRE]
 [SLUG]slug-sans-accents[/SLUG]
@@ -223,10 +220,10 @@ FORMAT EXACT :
 [FAQ_Q4]Question 4[/FAQ_Q4]
 [FAQ_A4]Réponse 4[/FAQ_A4]
 [CONTENU]HTML complet (p, h2, h3, ul, li, strong, em uniquement)[/CONTENU]"""
- 
+
     print(f'  Appel API pour {cat}...')
     t = call_api(prompt)
- 
+
     titre      = extract('TITRE', t) or 'Article sans gluten'
     slug       = re.sub(r'[^a-z0-9-]', '', extract('SLUG', t).lower().replace(' ','-'))[:60] or f'article-{index_num}'
     meta       = extract('META', t)
@@ -235,7 +232,7 @@ FORMAT EXACT :
     contenu    = extract('CONTENU', t) or '<p>Article en cours.</p>'
     # Chercher une vraie photo Pexels en lien avec le titre
     img = get_pexels_image(titre, cat)
- 
+
     faq_html = '<div class="faq-block"><h2>Questions fréquentes</h2>'
     faq_schema_items = []
     for j in range(1, 5):
@@ -247,7 +244,7 @@ FORMAT EXACT :
             at = a.group(1).strip().replace('"',"'")
             faq_schema_items.append(f'{{"@type":"Question","name":"{qt}","acceptedAnswer":{{"@type":"Answer","text":"{at}"}}}}')
     faq_html += '</div>'
- 
+
     related_links = ''
     try:
         existing = [f for f in os.listdir(cat) if f.endswith('.html') and f != 'index.html' and f != slug+'.html'][:3]
@@ -261,14 +258,14 @@ FORMAT EXACT :
             related_links = '<div class="related-articles"><h3>À lire aussi</h3><div class="related-links">'+''.join(items)+'</div></div>'
     except:
         pass
- 
+
     cta = '<div class="cta-box"><h3>🎁 Télécharge ton guide de survie GRATUIT</h3><p>Téléchargé par plus de 20 000 femmes intolérantes.</p><a class="cta-btn" href="https://www.whynottraining.fr/08c32d2c-1fbf916c-b0fd38be-d95c800f-ee160319-0993e605" target="_blank">Je veux mon guide gratuit →</a></div>' if cat == 'sante' else '<div class="cta-box"><h3>📚 La Bible des Farines Sans Gluten</h3><p>27 farines décryptées, 3 mix magiques, le convertisseur de recettes.</p><a class="cta-btn" href="https://www.whynottraining.fr/ed790464" target="_blank">Je veux La Bible des Farines →</a></div>'
     disclaimer = '<div class="disclaimer"><strong>Information médicale :</strong> Cet article est à titre informatif uniquement. Consultez votre médecin.</div>' if cat == 'sante' else ''
- 
+
     schema     = f'{{"@context":"https://schema.org","@type":"BlogPosting","headline":"{titre}","description":"{meta}","image":"{img}","datePublished":"{TODAY_ISO}","dateModified":"{TODAY_ISO}","author":{{"@type":"Organization","name":"Le Club Sans Gluten"}},"publisher":{{"@type":"Organization","name":"Le Club Sans Gluten","url":"https://leclubsansgluten.com"}},"mainEntityOfPage":{{"@type":"WebPage","@id":"https://leclubsansgluten.com/{cat}/{slug}.html"}}}}'
     breadcrumb = f'{{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{{"@type":"ListItem","position":1,"name":"Accueil","item":"https://leclubsansgluten.com/"}},{{"@type":"ListItem","position":2,"name":"{label}","item":"https://leclubsansgluten.com/{cat}/"}},{{"@type":"ListItem","position":3,"name":"{titre}","item":"https://leclubsansgluten.com/{cat}/{slug}.html"}}]}}'
     faq_schema = f'{{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{",".join(faq_schema_items)}]}}' if faq_schema_items else ''
- 
+
     html = open('template.html').read()
     # Injecter la thématique dans un meta tag
     html = html.replace('</head>', f'<meta name="thematique" content="{thematique}"/>\n</head>', 1)
@@ -278,18 +275,18 @@ FORMAT EXACT :
                  ('[IMAGE_URL]',img),('[CTA_BOX]',cta),('[DISCLAIMER]',disclaimer),
                  ('[FAQ_BLOCK]',faq_html),('[MAILLAGE_INTERNE]',related_links),('[CONTENU_ARTICLE]',contenu)]:
         html = html.replace(k, v)
- 
+
     schemas = f'<script type="application/ld+json">{schema}</script>\n<script type="application/ld+json">{breadcrumb}</script>'
     if faq_schema:
         schemas += f'\n<script type="application/ld+json">{faq_schema}</script>'
     html = html.replace('<script type="application/ld+json">[SCHEMA_JSON]</script>', schemas)
- 
+
     os.makedirs(cat, exist_ok=True)
     open(f'{cat}/{slug}.html', 'w').write(html)
     print(f'  ✅ {cat}/{slug}.html — {titre}')
     return slug
- 
- 
+
+
 def build_homepage():
     """Régénère la homepage avec les articles les plus récents."""
     import re as re2
@@ -323,7 +320,7 @@ def build_homepage():
             img = im.group(1) if im else ''
             result.append((cat, f, title, img))
         return result
- 
+
     def make_cards(articles):
         cards = ''
         for cat, f, title, img in articles:
@@ -336,7 +333,7 @@ def build_homepage():
   </div>
 </a>\n'''
         return cards
- 
+
     def make_section(cat, titre=None):
         label, emoji, url = cats_config[cat]
         t = titre or f'{emoji} {label}'
@@ -350,7 +347,7 @@ def build_homepage():
   <div class="articles-grid">
 {cards}  </div>
 </section>'''
- 
+
     # Derniers articles toutes catégories
     all_articles = []
     for cat in ['recettes','sante','farines','guides']:
@@ -359,7 +356,7 @@ def build_homepage():
             mtime = os.path.getmtime(os.path.join(cat, f))
             all_articles.append((mtime, cat, f, title, img, label, emoji))
     all_articles.sort(reverse=True)
- 
+
     derniers_cards = ''
     for mtime, cat, f, title, img, label, emoji in all_articles[:6]:
         derniers_cards += f'''<a href="/{cat}/{f}" class="card">
@@ -369,15 +366,28 @@ def build_homepage():
     <div class="card-title">{title}</div>
   </div>
 </a>\n'''
- 
+
     derniers = f'''<section class="home-section">
   <div class="section-head"><h2 class="section-title">🆕 Derniers articles</h2></div>
   <div class="articles-grid">
 {derniers_cards}  </div>
 </section>'''
- 
+
+    # Mettre à jour les cartes recettes du moment
+    recettes_recent = get_recent('recettes', 6)
+    recettes_cards = ''
+    for cat, f, title, img in recettes_recent:
+        recettes_cards += f'<a href="/{cat}/{f}" class="card"><div class="card-img-wrap"><img class="card-img" src="{img}" alt="{title}" loading="lazy"/></div><div class="card-body"><div class="card-cat">🍞 Recettes</div><div class="card-title">{title}</div></div></a>\n'
+    
+    # Remplacer le contenu de recettesGrid
+    html = re2.sub(
+        r'(<div class="articles-grid" id="recettesGrid">).*?(</div>)',
+        rf'\1\n{recettes_cards}  \2',
+        html, flags=re2.DOTALL, count=1
+    )
+
     new_sections = derniers + '\n' + make_section('sante') + '\n' + make_section('farines') + '\n' + make_section('guides')
- 
+
     # Supprimer les anciennes sections
     for pattern in [
         r'<section class="home-section">.*?Sante.*?</section>',
@@ -387,7 +397,7 @@ def build_homepage():
         r'<section class="home-section">.*?Comparatifs.*?</section>',
     ]:
         html = re2.sub(pattern, '', html, flags=re2.DOTALL)
- 
+
     # Insérer avant les témoignages ou le footer
     if 'testimonials' in html:
         html = re2.sub(
@@ -397,12 +407,12 @@ def build_homepage():
         )
     else:
         html = html.replace('<footer class="site-footer">', new_sections + '\n<footer class="site-footer">', 1)
- 
+
     open('index.html', 'w').write(html)
     print('  ✅ Homepage régénérée')
- 
- 
- 
+
+
+
 def build_search_index():
     """Génère l'index de recherche pour le moteur de recherche du site."""
     import json as json3
@@ -431,16 +441,16 @@ def build_search_index():
     js = 'var SEARCH_INDEX = ' + json3.dumps(articles, ensure_ascii=False, separators=(',',':')) + ';'
     open('assets/search-index.js', 'w', encoding='utf-8').write(js)
     print(f'  ✅ Search index — {len(articles)} articles')
- 
- 
+
+
 if __name__ == '__main__':
     all_cats = ['recettes','sante','farines','guides']
     total = total_articles()
     cats_today = [all_cats[(total + i) % 4] for i in range(4)]
- 
+
     print(f'📅 {DATE_FR} — Génération de 4 articles')
     print(f'Catégories : {" / ".join(cats_today)}')
- 
+
     slugs = []
     for i, cat in enumerate(cats_today):
         print(f'\n--- Article {i+1}/4 : {cat} ---')
@@ -450,12 +460,12 @@ if __name__ == '__main__':
             build_index(cat)
         except Exception as e:
             print(f'  Erreur article {i+1}: {e}')
- 
+
     build_sitemap()
     build_homepage()
     build_search_index()
- 
+
     with open('_slugs.txt', 'w') as f:
         f.write('\n'.join(slugs))
- 
+
     print(f'\n✅ Terminé — {len(slugs)}/4 articles créés')
