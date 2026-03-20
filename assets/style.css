@@ -39,9 +39,9 @@ button{cursor:pointer;font-family:inherit}
 .header-search::placeholder{color:var(--gray)}
 
 .site-nav{background:var(--ink)}
-.site-nav-inner{max-width:1200px;margin:0 auto;padding:0 1.5rem;display:flex;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+.site-nav-inner{max-width:1200px;margin:0 auto;padding:0 1.5rem;display:flex;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;justify-content:center}
 .site-nav-inner::-webkit-scrollbar{display:none}
-.site-nav a{color:rgba(255,255,255,.65);font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:.8rem 1.1rem;display:block;white-space:nowrap;transition:color .2s;border-bottom:2px solid transparent}
+.site-nav a{color:rgba(255,255,255,.65);font-size:1.25rem;font-weight:600;letter-spacing:.03em;text-transform:uppercase;padding:.9rem 1.5rem;display:block;white-space:nowrap;transition:color .2s;border-bottom:2px solid transparent}
 .site-nav a:hover,.site-nav a.active{color:var(--white);border-bottom-color:var(--gold)}
 
 .reassurance{background:var(--white);border-bottom:1px solid var(--border);overflow:hidden;white-space:nowrap;padding:.5rem 0}
@@ -157,7 +157,7 @@ button{cursor:pointer;font-family:inherit}
   .site-header{padding:.6rem 1rem}
   .logo{font-size:1.35rem}
   .header-search{display:none}
-  .site-nav a{font-size:.68rem;padding:.7rem .75rem}
+  .site-nav a{font-size:1rem;padding:.8rem 1rem}
   .welcome-hero{padding:2rem 1rem}
   .welcome-title{font-size:1.75rem}
   .welcome-sub{font-size:.88rem}
@@ -184,7 +184,7 @@ button{cursor:pointer;font-family:inherit}
 @media(max-width:380px){
   .logo{font-size:1.2rem}
   .welcome-title{font-size:1.5rem}
-  .site-nav a{font-size:.62rem;padding:.65rem .55rem}
+  .site-nav a{font-size:.95rem;padding:.75rem .8rem}
 }
 
 /* ── SEARCH ── */
