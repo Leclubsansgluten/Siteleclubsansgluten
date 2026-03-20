@@ -288,102 +288,100 @@ FORMAT EXACT :
 
 
 def build_homepage():
-    """Regenere la homepage - utilise des marqueurs pour eviter les doublons."""
-    import re as re2, json as json2
-
+    import re as r2
     if not os.path.exists('index.html'):
         return
-
     html = open('index.html').read()
 
-    cats_config = {
-        'recettes': ('Recettes', '🍞', '/recettes/'),
-        'sante':    ('Santé', '🌿', '/sante/'),
-        'farines':  ('Farines', '⚖️', '/farines/'),
-        'guides':   ('Conseils', '📖', '/guides/'),
-    }
+    labels = {'recettes':'Recettes','sante':'Sante','farines':'Farines','guides':'Conseils'}
+    emojis = {'recettes':'Recettes','sante':'Sante','farines':'Farines','guides':'Conseils'}
 
-    def get_recent(cat, limit=4):
-        if not os.path.exists(cat): return []
+    def get_cards(cat, limit=6):
+        emoji_map = {'recettes':'Recettes','sante':'Sante','farines':'Farines','guides':'Conseils'}
+        emoji_icons = {'recettes':'Recettes','sante':'Sante','farines':'Farines','guides':'Conseils'}
+        if not os.path.exists(cat): return ''
         files = [(os.path.getmtime(os.path.join(cat,f)), f)
                  for f in os.listdir(cat) if f.endswith('.html') and f != 'index.html']
         files.sort(reverse=True)
-        result = []
-        for mtime, f in files[:limit]:
+        out = ''
+        for _, f in files[:limit]:
             fhtml = open(os.path.join(cat, f)).read()
-            tm = re2.search(r'<title>(.*?) -- Le Club', fhtml)
-            if not tm: tm = re2.search(r'<title>(.*?) . Le Club', fhtml)
-            title = tm.group(1) if tm else f.replace('-',' ').replace('.html','').capitalize()
-            im = re2.search(r'<img class="article-hero"[^>]+src="([^"]+)"', fhtml)
-            if not im: im = re2.search(r'"image":"([^"]+)"', fhtml)
+            tm = r2.search(r'<title>(.*?)[—\-]', fhtml)
+            title = tm.group(1).strip() if tm else f.replace('-',' ').replace('.html','')
+            im = r2.search(r'<img class="article-hero"[^>]+src="([^"]+)"', fhtml)
+            if not im: im = r2.search(r'"image":"([^"]+)"', fhtml)
             img = im.group(1) if im else ''
-            result.append((cat, f, title, img))
-        return result
+            out += '<a href="/' + cat + '/' + f + '" class="card"><div class="card-img-wrap"><img class="card-img" src="' + img + '" alt="' + title + '" loading="lazy"/></div><div class="card-body"><div class="card-cat">' + cat + '</div><div class="card-title">' + title + '</div></div></a>\n'
+        return out
 
-    def card(cat, f, title, img):
-        label, emoji, _ = cats_config[cat]
-        return (f'<a href="/{cat}/{f}" class="card">'
-                f'<div class="card-img-wrap"><img class="card-img" src="{img}" alt="{title}" loading="lazy"/></div>'
-                f'<div class="card-body"><div class="card-cat">{emoji} {label}</div>'
-                f'<div class="card-title">{title}</div></div></a>\n')
-
-    def make_section(cat):
-        label, emoji, url = cats_config[cat]
-        cards = ''.join(card(*a) for a in get_recent(cat, 4))
-        return (f'<div class="home-wrap">\n'
-                f'  <div class="section-head">\n'
-                f'    <h2 class="section-title">{emoji} {label}</h2>\n'
-                f'    <a class="section-link" href="{url}">Tout voir →</a>\n'
-                f'  </div>\n'
-                f'  <div class="articles-grid">\n{cards}  </div>\n'
-                f'</div>')
-
-    # Recettes grid
-    recettes_cards = ''.join(card(*a) for a in get_recent('recettes', 6))
-    html = re2.sub(
-        r'(<div class="articles-grid" id="recettesGrid">).*?(</div>)',
-        lambda m: m.group(1) + '\n' + recettes_cards + '  ' + m.group(2),
-        html, flags=re2.DOTALL, count=1
+    # Remplacer uniquement recettesGrid
+    new_cards = get_cards('recettes', 6)
+    html = r2.sub(
+        r'(<div class="articles-grid" id="recettesGrid">)(.*?)(</div>)',
+        lambda m: m.group(1) + '\n' + new_cards + m.group(3),
+        html, flags=r2.DOTALL, count=1
     )
 
-    # Derniers articles
-    all_arts = []
-    for cat in ['recettes','sante','farines','guides']:
-        for c,f,title,img in get_recent(cat,10):
-            mtime = os.path.getmtime(os.path.join(cat,f))
-            all_arts.append((mtime,c,f,title,img))
-    all_arts.sort(reverse=True)
-    derniers_cards = ''.join(card(c,f,t,i) for _,c,f,t,i in all_arts[:6])
-    derniers = (f'<div class="home-wrap">\n'
-                f'  <div class="section-head">\n'
-                f'    <h2 class="section-title">🆕 Derniers articles</h2>\n'
-                f'  </div>\n'
-                f'  <div class="articles-grid">\n{derniers_cards}  </div>\n'
-                f'</div>')
-
-    new_sections = derniers + '\n' + make_section('sante') + '\n' + make_section('farines') + '\n' + make_section('guides')
-
-    # Supprimer TOUTES les anciennes sections dynamiques (home-wrap avec section-title)
-    # en gardant uniquement le home-wrap de recettes (qui contient recettesGrid)
-    # et le home-wrap des avis
+    # Remplacer les sections dynamiques entre recettesGrid et les avis
+    grid_end_marker = '</div>\n</div>\n'
+    avis_marker = '<div class="home-wrap">\n  <div class="section-head">\n    <h2 class="section-title">💬'
     
-    # Trouver la fin du recettesGrid block
-    rg_end = html.find('</div>\n</div>', html.find('id="recettesGrid"'))
+    rg_pos = html.find('id="recettesGrid"')
+    rg_end = html.find(grid_end_marker, rg_pos)
     if rg_end > 0:
-        rg_end += len('</div>\n</div>')
+        rg_end += len(grid_end_marker)
     
-    # Trouver le debut des avis
-    avis_start = html.find('<div class="home-wrap">\n  <div class="section-head">\n    <h2 class="section-title">💬')
-    if avis_start < 0:
-        avis_start = html.find('<footer class="site-footer">')
-    
-    if rg_end > 0 and avis_start > rg_end:
-        html = html[:rg_end] + '\n\n' + new_sections + '\n\n' + html[avis_start:]
-    else:
-        html = html.replace('<footer class="site-footer">', new_sections + '\n<footer class="site-footer">', 1)
+    avis_pos = html.find(avis_marker)
+    if avis_pos < 0:
+        avis_pos = html.find('<footer class="site-footer">')
+
+    if rg_end > 0 and avis_pos > rg_end:
+        # Construire les nouvelles sections
+        def make_sec(cat, label, emoji, nb=4):
+            cards = get_cards(cat, nb)
+            return ('<div class="home-wrap">\n'
+                    '  <div class="section-head">\n'
+                    '    <h2 class="section-title">' + emoji + ' ' + label + '</h2>\n'
+                    '    <a class="section-link" href="/' + cat + '/">Tout voir &rarr;</a>\n'
+                    '  </div>\n'
+                    '  <div class="articles-grid">\n' + cards + '  </div>\n'
+                    '</div>\n')
+
+        # Derniers articles
+        all_arts = []
+        for cat in ['recettes','sante','farines','guides']:
+            if not os.path.exists(cat): continue
+            files = [(os.path.getmtime(os.path.join(cat,f)), cat, f)
+                     for f in os.listdir(cat) if f.endswith('.html') and f != 'index.html']
+            all_arts.extend(files)
+        all_arts.sort(reverse=True)
+        dlabel = {'recettes':'Recettes','sante':'Sante','farines':'Farines','guides':'Conseils'}
+        derniers_cards = ''
+        for _, cat, f in all_arts[:6]:
+            fhtml = open(os.path.join(cat, f)).read()
+            tm = r2.search(r'<title>(.*?)[—\-]', fhtml)
+            title = tm.group(1).strip() if tm else f.replace('-',' ').replace('.html','')
+            im = r2.search(r'<img class="article-hero"[^>]+src="([^"]+)"', fhtml)
+            if not im: im = r2.search(r'"image":"([^"]+)"', fhtml)
+            img = im.group(1) if im else ''
+            derniers_cards += '<a href="/' + cat + '/' + f + '" class="card"><div class="card-img-wrap"><img class="card-img" src="' + img + '" alt="' + title + '" loading="lazy"/></div><div class="card-body"><div class="card-cat">' + dlabel.get(cat,cat) + '</div><div class="card-title">' + title + '</div></div></a>\n'
+
+        derniers_sec = ('<div class="home-wrap">\n'
+                       '  <div class="section-head">\n'
+                       '    <h2 class="section-title">Derniers articles</h2>\n'
+                       '  </div>\n'
+                       '  <div class="articles-grid">\n' + derniers_cards + '  </div>\n'
+                       '</div>\n')
+
+        new_sections = (derniers_sec +
+                       make_sec('sante', 'Sante', 'Sante') +
+                       make_sec('farines', 'Farines', 'Farines') +
+                       make_sec('guides', 'Conseils', 'Conseils'))
+
+        html = html[:rg_end] + new_sections + html[avis_pos:]
 
     open('index.html', 'w').write(html)
-    print('  ✅ Homepage régénérée sans doublons')
+    print('  Homepage regeneree')
 
 
 def build_search_index():
