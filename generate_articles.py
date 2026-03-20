@@ -395,6 +395,37 @@ def build_homepage():
     print('  ✅ Homepage régénérée')
 
 
+
+def build_search_index():
+    """Génère l'index de recherche pour le moteur de recherche du site."""
+    import json as json3
+    articles = []
+    cats_config = {
+        'recettes': ('Recettes', '🍞'),
+        'sante': ('Santé', '🌿'),
+        'farines': ('Farines', '⚖️'),
+        'guides': ('Conseils', '📖'),
+    }
+    for cat, (label, emoji) in cats_config.items():
+        if not os.path.exists(cat):
+            continue
+        for f in os.listdir(cat):
+            if not f.endswith('.html') or f == 'index.html':
+                continue
+            fhtml = open(os.path.join(cat, f)).read()
+            tm = re.search(r'<title>(.*?) — Le Club', fhtml)
+            title = tm.group(1) if tm else f.replace('-',' ').replace('.html','').capitalize()
+            im = re.search(r'<img class="article-hero"[^>]+src="([^"]+)"', fhtml)
+            if not im: im = re.search(r'"image":"([^"]+)"', fhtml)
+            img = im.group(1) if im else ''
+            articles.append({'title':title,'url':f'/{cat}/{f}','cat':label,'emoji':emoji,'img':img})
+    
+    os.makedirs('assets', exist_ok=True)
+    js = 'var SEARCH_INDEX = ' + json3.dumps(articles, ensure_ascii=False, separators=(',',':')) + ';'
+    open('assets/search-index.js', 'w', encoding='utf-8').write(js)
+    print(f'  ✅ Search index — {len(articles)} articles')
+
+
 if __name__ == '__main__':
     all_cats = ['recettes','sante','farines','guides']
     total = total_articles()
@@ -415,6 +446,7 @@ if __name__ == '__main__':
 
     build_sitemap()
     build_homepage()
+    build_search_index()
 
     with open('_slugs.txt', 'w') as f:
         f.write('\n'.join(slugs))
