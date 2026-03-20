@@ -1,4 +1,4 @@
-guides/comment-remplacer-gluten-patisserie-guide-complet
-recettes/cookies-moelleux-sans-gluten-pepites-chocolat
-sante/menopause-sans-gluten-equilibrer-hormones-digestion
-farines/farine-chataigne-sans-gluten-patisserie-guide
+farines/farine-chataigne-sans-gluten-recettes-guide
+guides/organiser-courses-sans-gluten-famille-guide
+recettes/quiche-lorraine-sans-gluten-recette-traditionnelle
+sante/menopause-sans-gluten-equilibre-hormonal-nutrition
