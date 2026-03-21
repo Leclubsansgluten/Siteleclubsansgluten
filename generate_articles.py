@@ -299,21 +299,133 @@ def build_sitemap():
     except Exception as e:
         print(f'  ⚠️ Ping Google: {e}')
 
+def google_search(query, num=5):
+    """Cherche sur Google et retourne les URLs des premiers resultats."""
+    try:
+        import urllib.request, urllib.parse
+        q = urllib.parse.quote(query)
+        url = f'https://www.google.com/search?q={q}&num={num}&hl=fr'
+        req = urllib.request.Request(url, headers={
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept-Language': 'fr-FR,fr;q=0.9',
+        })
+        html = urllib.request.urlopen(req, timeout=15).read().decode('utf-8', errors='ignore')
+        # Extraire les URLs des resultats
+        urls = re.findall(r'href="(https://[^"]+)"', html)
+        # Filtrer les URLs Google et autres non pertinentes
+        filtered = []
+        skip = ['google.', 'youtube.', 'facebook.', 'twitter.', 'instagram.', 'amazon.', 'wikipedia.']
+        for u in urls:
+            if not any(s in u for s in skip) and u not in filtered:
+                filtered.append(u)
+            if len(filtered) >= num:
+                break
+        return filtered
+    except Exception as e:
+        print(f'  ⚠️ Google search: {e}')
+        return []
+
+def fetch_page(url):
+    """Recupere le contenu texte d une page web."""
+    try:
+        import urllib.request
+        req = urllib.request.Request(url, headers={
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+            'Accept': 'text/html',
+        })
+        html = urllib.request.urlopen(req, timeout=10).read().decode('utf-8', errors='ignore')
+        # Supprimer les balises HTML
+        text = re.sub(r'<script[^>]*>.*?</script>', ' ', html, flags=re.DOTALL)
+        text = re.sub(r'<style[^>]*>.*?</style>', ' ', text, flags=re.DOTALL)
+        text = re.sub(r'<[^>]+>', ' ', text)
+        text = re.sub(r'\s+', ' ', text).strip()
+        # Garder les 3000 premiers caracteres
+        return text[:3000]
+    except Exception as e:
+        return ''
+
+def gather_sources(sujet, cat):
+    """Cherche et recupere le contenu de plusieurs sources sur le sujet."""
+    if cat == 'recettes':
+        queries = [
+            f'recette {sujet} sans gluten ingrédients',
+            f'{sujet} sans gluten recette facile',
+        ]
+    else:
+        queries = [
+            f'{sujet} sans gluten',
+            f'intolérance gluten {sujet}',
+        ]
+    
+    all_content = []
+    seen_urls = set()
+    
+    for query in queries:
+        urls = google_search(query, num=5)
+        for url in urls[:3]:
+            if url in seen_urls:
+                continue
+            seen_urls.add(url)
+            content = fetch_page(url)
+            if len(content) > 200:
+                all_content.append(f'[SOURCE: {url}]\n{content}')
+            if len(all_content) >= 5:
+                break
+        if len(all_content) >= 5:
+            break
+    
+    return '\n\n'.join(all_content[:5])
+
 def generate_article(cat, index_num):
     label = LABELS[cat]
     emoji = EMOJIS[cat]
+    # Choisir un sujet d abord
+    sujet_prompt = f"""Tu es expert en alimentation sans gluten. 
+Choisis UN sujet precis pour la categorie {cat} cibland les femmes françaises 30-55 ans intolérantes au gluten.
+Reponds UNIQUEMENT avec le sujet en francais, rien d autre. Exemple: "gateau anniversaire chocolat" ou "symptomes fatigue chronique gluten"
+"""
+    sujet_result = subprocess.run(
+        ['curl','-s','https://api.anthropic.com/v1/messages',
+         '-H', f'x-api-key: {API_KEY}',
+         '-H', 'anthropic-version: 2023-06-01',
+         '-H', 'content-type: application/json',
+         '-d', json.dumps({"model":"claude-haiku-4-5-20251001","max_tokens":50,"messages":[{"role":"user","content":sujet_prompt}]})],
+        capture_output=True, text=True, timeout=30
+    )
+    try:
+        sujet = json.loads(sujet_result.stdout)['content'][0]['text'].strip()
+    except:
+        sujet = cat + ' sans gluten'
+    
+    print(f'  🔍 Sujet choisi: {sujet}')
+    
+    # Rechercher des sources
+    print(f'  🌐 Recherche de sources...')
+    sources = gather_sources(sujet, cat)
+    sources_text = f'\n\nSOURCES TROUVEES SUR INTERNET:\n{sources}' if sources else ''
+    
+    recette_instruction = ''
+    if cat == 'recettes':
+        recette_instruction = """
+IMPORTANT POUR LES RECETTES:
+- Recupere les ingredients et quantites EXACTES des sources trouvees
+- Combine les meilleures informations de plusieurs recettes
+- Garde les quantites reelles et verifiees
+- Reecris completement la preparation dans ton style
+"""
+
     prompt = f"""Tu es un expert SEO et rédacteur spécialisé dans l'alimentation sans gluten pour leclubsansgluten.com.
 
 CATÉGORIE : {cat}
-
-Choisis un sujet précis longue traîne pour {cat}, ciblant les femmes françaises 30-55 ans intolérantes au gluten. Sujet non redondant.
-
+SUJET : {sujet}
+{recette_instruction}
 Rédige un article complet 3500 mots minimum avec :
 - Introduction répondant immédiatement à l'intention de recherche
 - 6+ H2 avec mots-clés intégrés naturellement
 - Paragraphes courts (150-200 mots), ton chaleureux d'experte
 - 2+ listes ou tableaux avec données chiffrées
 - FAQ 4 questions réelles Google
+{sources_text}
 
 FORMAT EXACT :
 [TITRE]titre 60 car max avec accents[/TITRE]
