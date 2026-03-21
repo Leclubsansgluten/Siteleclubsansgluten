@@ -86,6 +86,31 @@ UNSPLASH_POOL = [
     'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&q=80',
 ]
 
+def get_keyword(titre):
+    """Demande a Claude le meilleur mot-cle de recherche en anglais."""
+    try:
+        payload = json.dumps({
+            "model": "claude-haiku-4-5-20251001",
+            "max_tokens": 20,
+            "messages": [{
+                "role": "user",
+                "content": "Give me 2-3 English keywords for a food/health photo search for this French article title: '" + titre + "'. Reply ONLY with the keywords, nothing else. Example: 'chocolate cake' or 'gluten free bread' or 'woman fatigue'"
+            }]
+        })
+        result = subprocess.run(
+            ['curl', '-s', 'https://api.anthropic.com/v1/messages',
+             '-H', 'x-api-key: ' + API_KEY,
+             '-H', 'anthropic-version: 2023-06-01',
+             '-H', 'content-type: application/json',
+             '-d', payload],
+            capture_output=True, text=True, timeout=15
+        )
+        data = json.loads(result.stdout)
+        keyword = data['content'][0]['text'].strip().strip('"').strip("'")
+        return keyword
+    except Exception as e:
+        return ' '.join(titre.split()[:3])
+
 def get_pexels_image(titre, cat):
     """Cherche une photo Pexels. Si echec, utilise Unsplash avec compteur."""
     global _img_counter
@@ -94,7 +119,8 @@ def get_pexels_image(titre, cat):
 
     # Essai Pexels
     try:
-        query = ' '.join(titre.replace(':', '').replace('—', '').strip().split()[:5])
+        keyword = get_keyword(titre)
+        query = keyword if keyword else ' '.join(titre.replace(':', '').replace('—', '').strip().split()[:5])
         page = (_img_counter % 5) + 1
         url = f'https://api.pexels.com/v1/search?query={urllib.parse.quote(query)}&per_page=5&page={page}&orientation=landscape'
         req = urllib.request.Request(url, headers={
@@ -114,7 +140,8 @@ def get_pexels_image(titre, cat):
     # Fallback : recherche Unsplash par titre
     try:
         import urllib.parse
-        query = ' '.join(titre.replace(':', '').replace('—', '').strip().split()[:5])
+        keyword = get_keyword(titre)
+        query = keyword if keyword else ' '.join(titre.replace(':', '').replace('—', '').strip().split()[:5])
         page = (_img_counter % 10) + 1
         url = f'https://api.unsplash.com/search/photos?query={urllib.parse.quote(query)}&per_page=10&page={page}&orientation=landscape'
         req = urllib.request.Request(url, headers={
