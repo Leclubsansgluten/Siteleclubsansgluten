@@ -3,7 +3,8 @@ import os, re, json, subprocess, urllib.request
 from datetime import datetime
 
 API_KEY      = os.environ.get('ANTHROPIC_API_KEY', '')
-PEXELS_KEY   = os.environ.get('PEXELS_API_KEY', '')
+PEXELS_KEY    = os.environ.get('PEXELS_API_KEY', '')
+UNSPLASH_KEY  = os.environ.get('UNSPLASH_API_KEY', '')
 TODAY_ISO = datetime.now().strftime('%Y-%m-%d')
 MONTHS    = ['janvier','février','mars','avril','mai','juin','juillet','août',
              'septembre','octobre','novembre','décembre']
@@ -18,22 +19,80 @@ DESCS  = {
     'farines':  "Comparatifs complets des farines sans gluten. Guides d'utilisation pratiques.",
     'guides':   'Guides pratiques pour bien vivre sans gluten : débuter, voyager, cuisiner avec un petit budget.'
 }
-# Images de fallback si Pexels échoue
+# Images de fallback Unsplash variées par thème
 IMAGES_FALLBACK = {
-    'recettes': 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1200&q=80',
-    'sante':    'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=1200&q=80',
-    'farines':  'https://images.unsplash.com/photo-1612200606649-1e95b16fcf2c?w=1200&q=80',
-    'guides':   'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=1200&q=80',
+    'recettes': [
+        'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1200&q=80',
+        'https://images.unsplash.com/photo-1547592180-85f173990554?w=1200&q=80',
+        'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=1200&q=80',
+        'https://images.unsplash.com/photo-1565299543923-37dd37887442?w=1200&q=80',
+        'https://images.unsplash.com/photo-1519676867240-f03562e64548?w=1200&q=80',
+        'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=1200&q=80',
+        'https://images.unsplash.com/photo-1568571780765-9276ac8b75a2?w=1200&q=80',
+        'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=1200&q=80',
+    ],
+    'sante': [
+        'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=1200&q=80',
+        'https://images.unsplash.com/photo-1505576399279-565b52d4ac71?w=1200&q=80',
+        'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=1200&q=80',
+        'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=1200&q=80',
+        'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1200&q=80',
+        'https://images.unsplash.com/photo-1544126592-807ade215a0b?w=1200&q=80',
+    ],
+    'farines': [
+        'https://images.unsplash.com/photo-1612200606649-1e95b16fcf2c?w=1200&q=80',
+        'https://images.unsplash.com/photo-1585478259715-4c6d5047b7c1?w=1200&q=80',
+        'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=1200&q=80',
+        'https://images.unsplash.com/photo-1558636508-e0969431e67f?w=1200&q=80',
+        'https://images.unsplash.com/photo-1556909211-36987daf7b4d?w=1200&q=80',
+    ],
+    'guides': [
+        'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=1200&q=80',
+        'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&q=80',
+        'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=1200&q=80',
+        'https://images.unsplash.com/photo-1482575832494-771f74bf6857?w=1200&q=80',
+        'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&q=80',
+        'https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&q=80',
+    ],
 }
 
-# Compteur pour varier les images
+# Compteur global pour varier les fallbacks
+_fallback_counter = 0
+
+# Compteur global pour varier les images
 _img_counter = 0
 
+# Pool d'images Unsplash de fallback variées par thème
+UNSPLASH_POOL = [
+    'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1200&q=80',
+    'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=1200&q=80',
+    'https://images.unsplash.com/photo-1612200606649-1e95b16fcf2c?w=1200&q=80',
+    'https://images.unsplash.com/photo-1547592180-85f173990554?w=1200&q=80',
+    'https://images.unsplash.com/photo-1519676867240-f03562e64548?w=1200&q=80',
+    'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=1200&q=80',
+    'https://images.unsplash.com/photo-1568571780765-9276ac8b75a2?w=1200&q=80',
+    'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=1200&q=80',
+    'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=1200&q=80',
+    'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=1200&q=80',
+    'https://images.unsplash.com/photo-1549931319-a545dcf3bc7f?w=1200&q=80',
+    'https://images.unsplash.com/photo-1598373182133-52452f7691ef?w=1200&q=80',
+    'https://images.unsplash.com/photo-1476718406336-bb5a9690ee2a?w=1200&q=80',
+    'https://images.unsplash.com/photo-1607958996333-41aef7caefaa?w=1200&q=80',
+    'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=1200&q=80',
+    'https://images.unsplash.com/photo-1544126592-807ade215a0b?w=1200&q=80',
+    'https://images.unsplash.com/photo-1585478259715-4c6d5047b7c1?w=1200&q=80',
+    'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=1200&q=80',
+    'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=1200&q=80',
+    'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&q=80',
+]
+
 def get_pexels_image(titre, cat):
-    """Cherche une photo Pexels unique en lien avec le titre de l'article."""
+    """Cherche une photo Pexels. Si echec, utilise Unsplash avec compteur."""
     global _img_counter
     _img_counter += 1
     import urllib.request, urllib.parse, json as json2
+
+    # Essai Pexels
     try:
         query = ' '.join(titre.replace(':', '').replace('—', '').strip().split()[:5])
         page = (_img_counter % 5) + 1
@@ -47,11 +106,35 @@ def get_pexels_image(titre, cat):
         if data.get('photos'):
             idx = (_img_counter - 1) % len(data['photos'])
             img_url = data['photos'][idx]['src']['large2x']
-            print(f'  📸 Pexels: {img_url[:60]}...')
+            print(f'  📸 Pexels: OK')
             return img_url
     except Exception as e:
-        print(f'  ⚠️ Pexels échoué: {e}')
-    return IMAGES_FALLBACK.get(cat, IMAGES_FALLBACK['recettes'])
+        print(f'  ⚠️ Pexels echoue, fallback Unsplash: {e}')
+
+    # Fallback : recherche Unsplash par titre
+    try:
+        import urllib.parse
+        query = ' '.join(titre.replace(':', '').replace('—', '').strip().split()[:5])
+        page = (_img_counter % 10) + 1
+        url = f'https://api.unsplash.com/search/photos?query={urllib.parse.quote(query)}&per_page=10&page={page}&orientation=landscape'
+        req = urllib.request.Request(url, headers={
+            'Authorization': f'Client-ID {UNSPLASH_KEY}',
+            'Accept-Version': 'v1',
+        })
+        data = json2.loads(urllib.request.urlopen(req, timeout=15).read())
+        if data.get('results'):
+            idx = (_img_counter - 1) % len(data['results'])
+            img_url = data['results'][idx]['urls']['regular']
+            print(f'  📸 Unsplash: OK')
+            return img_url
+    except Exception as e:
+        print(f'  ⚠️ Unsplash echoue aussi: {e}')
+
+    # Dernier recours : pool fixe
+    img = UNSPLASH_POOL[(_img_counter - 1) % len(UNSPLASH_POOL)]
+    print(f'  📸 Pool fixe #{(_img_counter - 1) % len(UNSPLASH_POOL)}')
+    return img
+
 
 def total_articles():
     count = 0
