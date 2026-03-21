@@ -81,127 +81,91 @@
   <div class="reassurance-track"><span>✅ Informations vérifiées</span><span>👥 100 000 membres</span><span>🔄 Mis à jour chaque jour</span><span>🎁 Guide de survie GRATUIT</span><span>🏆 Site N°1 sans gluten en France</span><span>🍞 Recettes approuvées par la communauté</span><span>✅ Informations vérifiées</span><span>👥 100 000 membres</span><span>🔄 Mis à jour chaque jour</span><span>🎁 Guide de survie GRATUIT</span><span>🏆 Site N°1 sans gluten en France</span><span>🍞 Recettes approuvées par la communauté</span></div>
 </div>
 
-<!-- SECTION 1 : Recettes du moment -->
 <div class="home-wrap">
   <div class="section-head">
-    <h2 class="section-title">🍞 Recettes du moment</h2>
-    <a class="section-link" href="/recettes/">Tout voir →</a>
-  </div>
-  <div class="subcats">
-    <button class="subcat active" onclick="filterHome('toutes',this)">🍽️ Toutes</button>
-    <button class="subcat" onclick="filterHome('rapide',this)">🚀 Rapide</button>
-    <button class="subcat" onclick="filterHome('pdej',this)">🥐 Petit déjeuner</button>
-    <button class="subcat" onclick="filterHome('entrees',this)">🥗 Entrées</button>
-    <button class="subcat" onclick="filterHome('plats',this)">🍽️ Plats</button>
-    <button class="subcat" onclick="filterHome('desserts',this)">🎂 Desserts</button>
-    <button class="subcat" onclick="filterHome('pain',this)">🍞 Pain</button>
-  </div>
-  <script>
-  function filterHome(cat,btn){
-    document.querySelectorAll('.subcats .subcat').forEach(function(b){b.classList.remove('active')});
-    btn.classList.add('active');
-    if(cat==='toutes'){
-      document.querySelectorAll('#recettesGrid .card').forEach(function(c){c.style.display='';});
-      return;
-    }
-    var matched=[];
-    document.querySelectorAll('#recettesGrid .card').forEach(function(c){
-      var href=(c.getAttribute('href')||'').toLowerCase();
-      var title=(c.querySelector('.card-title')||{textContent:''}).textContent.toLowerCase();
-      var text=href+' '+title;
-      var show=false;
-      if(cat==='rapide')show=/rapide|express|vite/.test(text);
-      if(cat==='pdej')show=/petit|dejeuner|breakfast|muffin|pancake|granola|gouter|biscuit/.test(text);
-      if(cat==='entrees')show=/soupe|veloute|minestrone|bouillon|salade|entree/.test(text);
-      if(cat==='plats')show=/lasagne|quiche|pizza|gratin|curry|risotto/.test(text);
-      if(cat==='desserts')show=/gateau|tarte|brownie|cookie|fondant|chocolat|citron|anniversaire|dessert/.test(text);
-      if(cat==='pain')show=/pain|baguette|brioche|chataigne|sarrasin|galette|mie/.test(text);
-      if(show)matched.push(c);
-      c.style.display='none';
-    });
-    if(matched.length===0){
-      document.querySelectorAll('#recettesGrid .card').forEach(function(c){c.style.display='';});
-    } else {
-      matched.forEach(function(c){c.style.display='';});
-    }
-  }
-  </script>
-  <div class="articles-grid" id="recettesGrid">
-<a href="/recettes/quiche-lorraine-sans-gluten-recette-traditionnelle.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1200&q=80" alt="Quiche lorraine sans gluten : recette traditionnelle facile" loading="lazy"/></div><div class="card-body"><div class="card-cat">🍞 Recettes</div><div class="card-title">Quiche lorraine sans gluten : recette traditionnelle facile</div></div></a>
-<a href="/recettes/tarte-tatin-pommes-sans-gluten.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.pexels.com/photos/4748432/pexels-photo-4748432.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" alt="Tarte tatin aux pommes sans gluten : la recette parfaite" loading="lazy"/></div><div class="card-body"><div class="card-cat">🍞 Recettes</div><div class="card-title">Tarte tatin aux pommes sans gluten : la recette parfaite</div></div></a>
-<a href="/recettes/tarte-citron-meringuee-sans-gluten.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.pexels.com/photos/4121637/pexels-photo-4121637.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" alt="Tarte au citron meringuée sans gluten : recette légère" loading="lazy"/></div><div class="card-body"><div class="card-cat">🍞 Recettes</div><div class="card-title">Tarte au citron meringuée sans gluten : recette légère</div></div></a>
-<a href="/recettes/soupe-veloute-courge-sans-gluten.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.pexels.com/photos/5605555/pexels-photo-5605555.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" alt="Velouté de courge butternut sans gluten crémeux" loading="lazy"/></div><div class="card-body"><div class="card-cat">🍞 Recettes</div><div class="card-title">Velouté de courge butternut sans gluten crémeux</div></div></a>
-<a href="/recettes/soupe-minestrone-sans-gluten.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.pexels.com/photos/36131750/pexels-photo-36131750.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" alt="Minestrone sans gluten complet et nourrissant" loading="lazy"/></div><div class="card-body"><div class="card-cat">🍞 Recettes</div><div class="card-title">Minestrone sans gluten complet et nourrissant</div></div></a>
-<a href="/recettes/recettes-patisseries-sans-gluten-anniversaire-enfants.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.pexels.com/photos/36143711/pexels-photo-36143711.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" alt="Recettes pâtisseries sans gluten pour anniversaires enfants" loading="lazy"/></div><div class="card-body"><div class="card-cat">🍞 Recettes</div><div class="card-title">Recettes pâtisseries sans gluten pour anniversaires enfants</div></div></a>
-  </div><div class="card-body"><div class="card-cat">recettes</div><div class="card-title">Cookies moelleux sans gluten aux pépites de chocolat</div></div></a>
-<a href="/recettes/tarte-tatin-pommes-sans-gluten.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.pexels.com/photos/4748432/pexels-photo-4748432.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" alt="Tarte tatin aux pommes sans gluten : la recette parfaite" loading="lazy"/></div><div class="card-body"><div class="card-cat">recettes</div><div class="card-title">Tarte tatin aux pommes sans gluten : la recette parfaite</div></div></a>
-<a href="/recettes/tarte-citron-meringuee-sans-gluten.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.pexels.com/photos/4121637/pexels-photo-4121637.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" alt="Tarte au citron meringuée sans gluten : recette légère" loading="lazy"/></div><div class="card-body"><div class="card-cat">recettes</div><div class="card-title">Tarte au citron meringuée sans gluten : recette légère</div></div></a>
-<a href="/recettes/soupe-veloute-courge-sans-gluten.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.pexels.com/photos/5605555/pexels-photo-5605555.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" alt="Velouté de courge butternut sans gluten crémeux" loading="lazy"/></div><div class="card-body"><div class="card-cat">recettes</div><div class="card-title">Velouté de courge butternut sans gluten crémeux</div></div></a>
-<a href="/recettes/soupe-minestrone-sans-gluten.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.pexels.com/photos/36131750/pexels-photo-36131750.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" alt="Minestrone sans gluten complet et nourrissant" loading="lazy"/></div><div class="card-body"><div class="card-cat">recettes</div><div class="card-title">Minestrone sans gluten complet et nourrissant</div></div></a>
-<a href="/recettes/recettes-patisseries-sans-gluten-anniversaire-enfants.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.pexels.com/photos/36143711/pexels-photo-36143711.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" alt="Recettes pâtisseries sans gluten pour anniversaires enfants" loading="lazy"/></div><div class="card-body"><div class="card-cat">recettes</div><div class="card-title">Recettes pâtisseries sans gluten pour anniversaires enfants</div></div></a>
-</div><div class="card-body"><div class="card-cat">🍞 Recettes</div><div class="card-title">Cookies moelleux sans gluten : recette facile chocolat</div></div></a>
-<a href="/recettes/tarte-tatin-pommes-sans-gluten.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.pexels.com/photos/4748432/pexels-photo-4748432.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" alt="Tarte tatin aux pommes sans gluten : la recette parfaite" loading="lazy"/></div><div class="card-body"><div class="card-cat">🍞 Recettes</div><div class="card-title">Tarte tatin aux pommes sans gluten : la recette parfaite</div></div></a>
-<a href="/recettes/tarte-citron-meringuee-sans-gluten.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.pexels.com/photos/4121637/pexels-photo-4121637.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" alt="Tarte au citron meringuée sans gluten : recette légère" loading="lazy"/></div><div class="card-body"><div class="card-cat">🍞 Recettes</div><div class="card-title">Tarte au citron meringuée sans gluten : recette légère</div></div></a>
-<a href="/recettes/soupe-veloute-courge-sans-gluten.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.pexels.com/photos/5605555/pexels-photo-5605555.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" alt="Velouté de courge butternut sans gluten crémeux" loading="lazy"/></div><div class="card-body"><div class="card-cat">🍞 Recettes</div><div class="card-title">Velouté de courge butternut sans gluten crémeux</div></div></a>
-<a href="/recettes/soupe-minestrone-sans-gluten.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.pexels.com/photos/36131750/pexels-photo-36131750.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" alt="Minestrone sans gluten complet et nourrissant" loading="lazy"/></div><div class="card-body"><div class="card-cat">🍞 Recettes</div><div class="card-title">Minestrone sans gluten complet et nourrissant</div></div></a>
-<a href="/recettes/recettes-patisseries-sans-gluten-anniversaire-enfants.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.pexels.com/photos/36143711/pexels-photo-36143711.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" alt="Recettes pâtisseries sans gluten pour anniversaires enfants" loading="lazy"/></div><div class="card-body"><div class="card-cat">🍞 Recettes</div><div class="card-title">Recettes pâtisseries sans gluten pour anniversaires enfants</div></div></a>
-  </div><div class="card-body"><div class="card-cat">🍞 Recettes</div><div class="card-title">Tarte tatin aux pommes sans gluten : la recette parfaite</div></div></a>
-<a href="/recettes/tarte-citron-meringuee-sans-gluten.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1519915028121-7d3463d20b13?w=800&q=80" alt="Tarte au citron meringuée sans gluten : recette légère" loading="lazy"/></div><div class="card-body"><div class="card-cat">🍞 Recettes</div><div class="card-title">Tarte au citron meringuée sans gluten : recette légère</div></div></a>
-<a href="/recettes/soupe-veloute-courge-sans-gluten.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1476718406336-bb5a9690ee2a?w=800&q=80" alt="Velouté de courge butternut sans gluten crémeux" loading="lazy"/></div><div class="card-body"><div class="card-cat">🍞 Recettes</div><div class="card-title">Velouté de courge butternut sans gluten crémeux</div></div></a>
-<a href="/recettes/soupe-minestrone-sans-gluten.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1547592180-85f173990554?w=800&q=80" alt="Minestrone sans gluten complet et nourrissant" loading="lazy"/></div><div class="card-body"><div class="card-cat">🍞 Recettes</div><div class="card-title">Minestrone sans gluten complet et nourrissant</div></div></a>
-<a href="/recettes/quiche-lorraine-sans-gluten.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1559650656-5d1d361ad10e?w=800&q=80" alt="Quiche lorraine sans gluten : la recette inratable" loading="lazy"/></div><div class="card-body"><div class="card-cat">🍞 Recettes</div><div class="card-title">Quiche lorraine sans gluten : la recette inratable</div></div></a>
-<a href="/recettes/pizza-sans-gluten-base-croustillante.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&q=80" alt="Pizza sans gluten : la base croustillante qui change tout" loading="lazy"/></div><div class="card-body"><div class="card-cat">🍞 Recettes</div><div class="card-title">Pizza sans gluten : la base croustillante qui change tout</div></div></a>
-  </div>
-</div>
-<div class="home-wrap">
-  <div class="section-head">
-    <h2 class="section-title">Derniers articles</h2>
+    <h2 class="section-title">🍞 Recettes</h2>
+    <a class="section-link" href="/recettes/">Tout voir &rarr;</a>
   </div>
   <div class="articles-grid">
-<a href="/farines/farine-chataigne-sans-gluten-patisserie-guide.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.pexels.com/photos/4500379/pexels-photo-4500379.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" alt="Farine de châtaigne sans gluten : guide complet pour pâtisserie" loading="lazy"/></div><div class="card-body"><div class="card-cat">Farines</div><div class="card-title">Farine de châtaigne sans gluten : guide complet pour pâtisserie</div></div></a>
-<a href="/sante/menopause-sans-gluten-equilibrer-hormones-digestion.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1540420773420-3366772f4999?w=1200&q=80" alt="Ménopause sans gluten : équilibrer hormones et digestion" loading="lazy"/></div><div class="card-body"><div class="card-cat">Sante</div><div class="card-title">Ménopause sans gluten : équilibrer hormones et digestion</div></div></a>
-<a href="/recettes/cookies-moelleux-sans-gluten-pepites-chocolat.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1200&q=80" alt="Cookies moelleux sans gluten aux pépites de chocolat" loading="lazy"/></div><div class="card-body"><div class="card-cat">Recettes</div><div class="card-title">Cookies moelleux sans gluten aux pépites de chocolat</div></div></a>
-<a href="/guides/comment-remplacer-gluten-patisserie-guide-complet.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=1200&q=80" alt="Comment remplacer le gluten en pâtisserie : guide complet" loading="lazy"/></div><div class="card-body"><div class="card-cat">Conseils</div><div class="card-title">Comment remplacer le gluten en pâtisserie : guide complet</div></div></a>
-<a href="/sante/ventre-plat-alimentation-sans-gluten-femmes.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.pexels.com/photos/5714347/pexels-photo-5714347.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" alt="Comment retrouver un ventre plat avec l'alimentation sans gluten" loading="lazy"/></div><div class="card-body"><div class="card-cat">Sante</div><div class="card-title">Comment retrouver un ventre plat avec l'alimentation sans gluten</div></div></a>
-<a href="/sante/test-intolerance-gluten-maison.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.pexels.com/photos/3204091/pexels-photo-3204091.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" alt="Comment tester son intolérance au gluten soi" loading="lazy"/></div><div class="card-body"><div class="card-cat">Sante</div><div class="card-title">Comment tester son intolérance au gluten soi</div></div></a>
+<a href="/recettes/" class="card">
+  <div class="card-img-wrap" style="background:linear-gradient(135deg,#1a1a2e,#16213e);display:flex;align-items:center;justify-content:center;aspect-ratio:16/9"><span style="font-size:3rem">🚀</span></div>
+  <div class="card-body"><div class="card-cat">🍞 Recettes</div><div class="card-title">Recettes rapides</div></div>
+</a>
+<a href="/recettes/" class="card">
+  <div class="card-img-wrap" style="background:linear-gradient(135deg,#f8b400,#e65c00);display:flex;align-items:center;justify-content:center;aspect-ratio:16/9"><span style="font-size:3rem">🥐</span></div>
+  <div class="card-body"><div class="card-cat">🍞 Recettes</div><div class="card-title">Petit déjeuner</div></div>
+</a>
+<a href="/recettes/" class="card">
+  <div class="card-img-wrap" style="background:linear-gradient(135deg,#134e5e,#71b280);display:flex;align-items:center;justify-content:center;aspect-ratio:16/9"><span style="font-size:3rem">🥗</span></div>
+  <div class="card-body"><div class="card-cat">🍞 Recettes</div><div class="card-title">Entrées & Soupes</div></div>
+</a>
+<a href="/recettes/" class="card">
+  <div class="card-img-wrap" style="background:linear-gradient(135deg,#c94b4b,#4b134f);display:flex;align-items:center;justify-content:center;aspect-ratio:16/9"><span style="font-size:3rem">🍽️</span></div>
+  <div class="card-body"><div class="card-cat">🍞 Recettes</div><div class="card-title">Plats principaux</div></div>
+</a>
+<a href="/recettes/" class="card">
+  <div class="card-img-wrap" style="background:linear-gradient(135deg,#f953c6,#b91d73);display:flex;align-items:center;justify-content:center;aspect-ratio:16/9"><span style="font-size:3rem">🎂</span></div>
+  <div class="card-body"><div class="card-cat">🍞 Recettes</div><div class="card-title">Desserts & Gâteaux</div></div>
+</a>
+<a href="/recettes/" class="card">
+  <div class="card-img-wrap" style="background:linear-gradient(135deg,#5c3d2e,#2d1f14);display:flex;align-items:center;justify-content:center;aspect-ratio:16/9"><span style="font-size:3rem">🍞</span></div>
+  <div class="card-body"><div class="card-cat">🍞 Recettes</div><div class="card-title">Pain & Boulangerie</div></div>
+</a>
+  </div>
+</div>
+
+<!-- SECTIONS_AUTO_DEBUT -->
+<div class="home-wrap">
+  <div class="section-head">
+    <h2 class="section-title">🆕 Derniers articles</h2>
+  </div>
+  <div class="articles-grid">
+<a href="/sante/test-intolerance-gluten-maison.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&q=80" alt="Comment tester son intolérance au gluten soi-même à la maison" loading="lazy"/></div><div class="card-body"><div class="card-cat">🌿 Santé</div><div class="card-title">Comment tester son intolérance au gluten soi-même à la maison</div></div></a>
+<a href="/sante/sans-gluten-prise-de-poids-science.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&q=80" alt="Sans gluten et prise de poids : ce que dit vraiment la science" loading="lazy"/></div><div class="card-body"><div class="card-cat">🌿 Santé</div><div class="card-title">Sans gluten et prise de poids : ce que dit vraiment la science</div></div></a>
+<a href="/sante/sans-gluten-grossesse.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1544126592-807ade215a0b?w=800&q=80" alt="Grossesse et régime sans gluten : ce qu'il faut savoir" loading="lazy"/></div><div class="card-body"><div class="card-cat">🌿 Santé</div><div class="card-title">Grossesse et régime sans gluten : ce qu'il faut savoir</div></div></a>
+<a href="/sante/regime-sans-gluten-sportif.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=80" alt="Régime sans gluten et sport : comment maintenir ses performances" loading="lazy"/></div><div class="card-body"><div class="card-cat">🌿 Santé</div><div class="card-title">Régime sans gluten et sport : comment maintenir ses performances</div></div></a>
+<a href="/sante/maladie-coeliaque-aliments-pieges.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80" alt="Maladie coeliaque : les 15 aliments pièges à éviter absolument" loading="lazy"/></div><div class="card-body"><div class="card-cat">🌿 Santé</div><div class="card-title">Maladie coeliaque : les 15 aliments pièges à éviter absolument</div></div></a>
+<a href="/sante/gluten-et-sante-mentale.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80" alt="Gluten et santé mentale : anxiété, dépression et brouillard mental" loading="lazy"/></div><div class="card-body"><div class="card-cat">🌿 Santé</div><div class="card-title">Gluten et santé mentale : anxiété, dépression et brouillard mental</div></div></a>
   </div>
 </div>
 <div class="home-wrap">
   <div class="section-head">
-    <h2 class="section-title">Sante Sante</h2>
+    <h2 class="section-title">🌿 Santé</h2>
     <a class="section-link" href="/sante/">Tout voir &rarr;</a>
   </div>
   <div class="articles-grid">
-<a href="/sante/menopause-sans-gluten-equilibrer-hormones-digestion.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1540420773420-3366772f4999?w=1200&q=80" alt="Ménopause sans gluten : équilibrer hormones et digestion" loading="lazy"/></div><div class="card-body"><div class="card-cat">sante</div><div class="card-title">Ménopause sans gluten : équilibrer hormones et digestion</div></div></a>
-<a href="/sante/ventre-plat-alimentation-sans-gluten-femmes.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.pexels.com/photos/5714347/pexels-photo-5714347.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" alt="Comment retrouver un ventre plat avec l'alimentation sans gluten" loading="lazy"/></div><div class="card-body"><div class="card-cat">sante</div><div class="card-title">Comment retrouver un ventre plat avec l'alimentation sans gluten</div></div></a>
-<a href="/sante/test-intolerance-gluten-maison.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.pexels.com/photos/3204091/pexels-photo-3204091.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" alt="Comment tester son intolérance au gluten soi" loading="lazy"/></div><div class="card-body"><div class="card-cat">sante</div><div class="card-title">Comment tester son intolérance au gluten soi</div></div></a>
-<a href="/sante/syndrome-intestin-irritable-intolerance-gluten-femmes.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1540420773420-3366772f4999?w=1200&q=80" alt="Syndrome de l'intestin irritable et intolérance au gluten" loading="lazy"/></div><div class="card-body"><div class="card-cat">sante</div><div class="card-title">Syndrome de l'intestin irritable et intolérance au gluten</div></div></a>
+<a href="/sante/test-intolerance-gluten-maison.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&q=80" alt="Comment tester son intolérance au gluten soi-même à la maison" loading="lazy"/></div><div class="card-body"><div class="card-cat">🌿 Santé</div><div class="card-title">Comment tester son intolérance au gluten soi-même à la maison</div></div></a>
+<a href="/sante/sans-gluten-prise-de-poids-science.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&q=80" alt="Sans gluten et prise de poids : ce que dit vraiment la science" loading="lazy"/></div><div class="card-body"><div class="card-cat">🌿 Santé</div><div class="card-title">Sans gluten et prise de poids : ce que dit vraiment la science</div></div></a>
+<a href="/sante/sans-gluten-grossesse.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1544126592-807ade215a0b?w=800&q=80" alt="Grossesse et régime sans gluten : ce qu'il faut savoir" loading="lazy"/></div><div class="card-body"><div class="card-cat">🌿 Santé</div><div class="card-title">Grossesse et régime sans gluten : ce qu'il faut savoir</div></div></a>
+<a href="/sante/regime-sans-gluten-sportif.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=80" alt="Régime sans gluten et sport : comment maintenir ses performances" loading="lazy"/></div><div class="card-body"><div class="card-cat">🌿 Santé</div><div class="card-title">Régime sans gluten et sport : comment maintenir ses performances</div></div></a>
   </div>
 </div>
 <div class="home-wrap">
   <div class="section-head">
-    <h2 class="section-title">Farines Farines</h2>
+    <h2 class="section-title">⚖️ Farines</h2>
     <a class="section-link" href="/farines/">Tout voir &rarr;</a>
   </div>
   <div class="articles-grid">
-<a href="/farines/farine-chataigne-sans-gluten-patisserie-guide.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.pexels.com/photos/4500379/pexels-photo-4500379.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" alt="Farine de châtaigne sans gluten : guide complet pour pâtisserie" loading="lazy"/></div><div class="card-body"><div class="card-cat">farines</div><div class="card-title">Farine de châtaigne sans gluten : guide complet pour pâtisserie</div></div></a>
-<a href="/farines/top-8-farines-sans-gluten-2025.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.pexels.com/photos/3984721/pexels-photo-3984721.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" alt="Top 8 des farines sans gluten en 2025 : notre classement complet" loading="lazy"/></div><div class="card-body"><div class="card-cat">farines</div><div class="card-title">Top 8 des farines sans gluten en 2025 : notre classement complet</div></div></a>
-<a href="/farines/psyllium-ingredient-cle-sans-gluten.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.pexels.com/photos/7418387/pexels-photo-7418387.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" alt="Psyllium : l'ingrédient indispensable de la boulangerie sans gluten" loading="lazy"/></div><div class="card-body"><div class="card-cat">farines</div><div class="card-title">Psyllium : l'ingrédient indispensable de la boulangerie sans gluten</div></div></a>
-<a href="/farines/mix-farines-maison-tout-usage.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.pexels.com/photos/4451344/pexels-photo-4451344.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" alt="Créer son mix de farines sans gluten maison tout usage" loading="lazy"/></div><div class="card-body"><div class="card-cat">farines</div><div class="card-title">Créer son mix de farines sans gluten maison tout usage</div></div></a>
+<a href="/farines/top-8-farines-sans-gluten-2025.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1585478259715-4c6d5047b7c1?w=800&q=80" alt="Top 8 des farines sans gluten en 2025 : notre classement complet" loading="lazy"/></div><div class="card-body"><div class="card-cat">⚖️ Farines</div><div class="card-title">Top 8 des farines sans gluten en 2025 : notre classement complet</div></div></a>
+<a href="/farines/psyllium-ingredient-cle-sans-gluten.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=1200&q=80" alt="Psyllium : l'ingrédient indispensable de la boulangerie sans gluten" loading="lazy"/></div><div class="card-body"><div class="card-cat">⚖️ Farines</div><div class="card-title">Psyllium : l'ingrédient indispensable de la boulangerie sans gluten</div></div></a>
+<a href="/farines/mix-farines-maison-tout-usage.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1585478259715-4c6d5047b7c1?w=800&q=80" alt="Créer son mix de farines sans gluten maison tout usage" loading="lazy"/></div><div class="card-body"><div class="card-cat">⚖️ Farines</div><div class="card-title">Créer son mix de farines sans gluten maison tout usage</div></div></a>
+<a href="/farines/feculents-sans-gluten-differences.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=1200&q=80" alt="Maïzena, fécule de tapioca, arrow-root : quelles différences ?" loading="lazy"/></div><div class="card-body"><div class="card-cat">⚖️ Farines</div><div class="card-title">Maïzena, fécule de tapioca, arrow-root : quelles différences ?</div></div></a>
   </div>
 </div>
 <div class="home-wrap">
   <div class="section-head">
-    <h2 class="section-title">Conseils Conseils</h2>
+    <h2 class="section-title">📖 Conseils</h2>
     <a class="section-link" href="/guides/">Tout voir &rarr;</a>
   </div>
   <div class="articles-grid">
-<a href="/guides/comment-remplacer-gluten-patisserie-guide-complet.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=1200&q=80" alt="Comment remplacer le gluten en pâtisserie : guide complet" loading="lazy"/></div><div class="card-body"><div class="card-cat">guides</div><div class="card-title">Comment remplacer le gluten en pâtisserie : guide complet</div></div></a>
-<a href="/guides/voyage-sans-gluten-europe.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.pexels.com/photos/6327129/pexels-photo-6327129.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" alt="Voyage sans gluten en Europe : les 10 pays les plus accueillants" loading="lazy"/></div><div class="card-body"><div class="card-cat">guides</div><div class="card-title">Voyage sans gluten en Europe : les 10 pays les plus accueillants</div></div></a>
-<a href="/guides/sans-gluten-restaurant.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.pexels.com/photos/6605248/pexels-photo-6605248.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" alt="Sans gluten au restaurant : comment commander sans se tromper" loading="lazy"/></div><div class="card-body"><div class="card-cat">guides</div><div class="card-title">Sans gluten au restaurant : comment commander sans se tromper</div></div></a>
-<a href="/guides/sans-gluten-noel-fetes.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.pexels.com/photos/1334133/pexels-photo-1334133.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" alt="Noël sans gluten : comment gérer les fêtes en famille" loading="lazy"/></div><div class="card-body"><div class="card-cat">guides</div><div class="card-title">Noël sans gluten : comment gérer les fêtes en famille</div></div></a>
+<a href="/guides/voyage-sans-gluten-europe.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80" alt="Voyage sans gluten en Europe : les 10 pays les plus accueillants" loading="lazy"/></div><div class="card-body"><div class="card-cat">📖 Conseils</div><div class="card-title">Voyage sans gluten en Europe : les 10 pays les plus accueillants</div></div></a>
+<a href="/guides/sans-gluten-restaurant.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80" alt="Sans gluten au restaurant : comment commander sans se tromper" loading="lazy"/></div><div class="card-body"><div class="card-cat">📖 Conseils</div><div class="card-title">Sans gluten au restaurant : comment commander sans se tromper</div></div></a>
+<a href="/guides/sans-gluten-noel-fetes.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1482575832494-771f74bf6857?w=800&q=80" alt="Noël sans gluten : comment gérer les fêtes en famille" loading="lazy"/></div><div class="card-body"><div class="card-cat">📖 Conseils</div><div class="card-title">Noël sans gluten : comment gérer les fêtes en famille</div></div></a>
+<a href="/guides/sans-gluten-ecole-enfants.html" class="card"><div class="card-img-wrap"><img class="card-img" src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&q=80" alt="Mon enfant intolérant au gluten à l'école : guide pratique" loading="lazy"/></div><div class="card-body"><div class="card-cat">📖 Conseils</div><div class="card-title">Mon enfant intolérant au gluten à l'école : guide pratique</div></div></a>
   </div>
 </div>
+<!-- SECTIONS_AUTO_FIN -->
+
 <div class="home-wrap">
   <div class="section-head">
     <h2 class="section-title">💬 Ce que dit notre communauté</h2>
