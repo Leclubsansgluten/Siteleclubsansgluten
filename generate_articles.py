@@ -220,16 +220,17 @@ def build_index(cat):
     if cat == 'recettes':
         subcats = '''<div class="subcats">
 <button class="subcat active" onclick="filterCat('toutes',this)">🍽️ Toutes</button>
-<button class="subcat" onclick="filterCat('pain',this)">🍞 Pain</button>
-<button class="subcat" onclick="filterCat('gateaux',this)">🎂 Gâteaux</button>
-<button class="subcat" onclick="filterCat('crepes',this)">🥞 Crêpes</button>
+<button class="subcat" onclick="filterCat('rapide',this)">🚀 Rapide</button>
+<button class="subcat" onclick="filterCat('pdej',this)">🥐 Petit déjeuner</button>
+<button class="subcat" onclick="filterCat('entrees',this)">🥗 Entrées</button>
 <button class="subcat" onclick="filterCat('plats',this)">🍽️ Plats</button>
-<button class="subcat" onclick="filterCat('soupes',this)">🍲 Soupes</button>
+<button class="subcat" onclick="filterCat('desserts',this)">🎂 Desserts</button>
+<button class="subcat" onclick="filterCat('pain',this)">🍞 Pain</button>
 </div>
 <script>
 var currentCat="toutes";
 function filterCat(c,b){currentCat=c;document.querySelectorAll(".subcat").forEach(function(x){x.classList.remove("active")});b.classList.add("active");document.getElementById("catSearch").value="";applyFilters();}
-function detectCat(c){var cat=c.getAttribute("data-cat");if(cat)return cat;var href=c.getAttribute("href")||"";var slug=href.split("/").pop().replace(".html","").toLowerCase();var title=(c.querySelector(".card-title")||{}).textContent||"";var text=slug+" "+title.toLowerCase();if(/pain|baguette|mie|brioche|chataigne/.test(text))return"pain";if(/crepe|galette|pancake|sarrasin/.test(text))return"crepes";if(/gateau|cake|brownie|cookie|muffin|tarte|citron|tatin|dessert/.test(text))return"gateaux";if(/soupe|veloute|minestrone|bouillon/.test(text))return"soupes";if(/lasagne|quiche|pizza|plat|gratin/.test(text))return"plats";return"toutes";}
+function detectCat(c){var href=(c.getAttribute("href")||"").toLowerCase();var title=(c.querySelector(".card-title")||{textContent:""}).textContent.toLowerCase();var text=href+" "+title;if(/rapide|express|vite/.test(text))return"rapide";if(/petit|dejeuner|breakfast|muffin|pancake|granola|gouter|biscuit/.test(text))return"pdej";if(/soupe|veloute|minestrone|bouillon|salade|entree/.test(text))return"entrees";if(/lasagne|quiche|pizza|gratin|curry|pates|pasta/.test(text))return"plats";if(/gateau|tarte|brownie|cookie|fondant|chocolat|citron|anniversaire|dessert|cake/.test(text))return"desserts";if(/pain|baguette|brioche|chataigne|sarrasin|galette|mie/.test(text))return"pain";return"toutes";}
 function applyFilters(){var q=document.getElementById("catSearch").value.toLowerCase();document.querySelectorAll(".card").forEach(function(c){var t=c.querySelector(".card-title");var cc=detectCat(c);c.style.display=((currentCat==="toutes"||cc===currentCat)&&(!q||(t&&t.textContent.toLowerCase().indexOf(q)>-1)))?"":"none";});}
 </script>'''
 
