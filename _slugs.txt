@@ -1,3 +1,4 @@
-sante/fatigue-chronique-intolerance-gluten-femme
-farines/remplacer-farine-ble-farines-sans-gluten-patisserie
-guides/repas-equilibres-sans-gluten-menopause
+farines/farine-de-riz-complete-patisserie-sans-gluten
+guides/alimentation-sans-gluten-travail-guide
+recettes/pates-fraiches-sans-gluten-maison-recette
+sante/osteoporose-intolerance-gluten-sante-osseuse-femmes
