@@ -175,7 +175,7 @@ def extract(tag, text):
 def call_api(prompt):
     payload = json.dumps({
         "model": "claude-sonnet-4-20250514",
-        "max_tokens": 8000,
+        "max_tokens": 1600,
         "messages": [{"role": "user", "content": prompt}]
     })
     result = subprocess.run(
